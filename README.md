@@ -1,3 +1,26 @@
+# Changes w.r.t emacs-live
+
+The following packs are added on top Emacs Live
+
+1. Power   
+  - eproject
+  - anything
+2. Programming 
+  - ess : Emacs Speaks Statistics
+  - python-mode      
+  - ipython
+  - sass-mode
+  - yaml-mode  
+  - haskell-mode  
+  - a bit of cc-mode config
+3. Writing     
+  - AUCTeX     
+  - pandoc-mode
+  - a bit of org-mode config
+
+This repo contains packages written by many different authors. Copyright belongs to the respective authors.
+
+
 <img src="http://github.com/downloads/overtone/emacs-live/emacs-live.png" />
 
 <!--
