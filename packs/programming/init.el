@@ -10,6 +10,7 @@
 (live-load-config-file "cc-conf.el")
 (live-load-config-file "ess-conf.el")
 (live-load-config-file "haskell-conf.el")
+(live-load-config-file "go-conf.el")
 
 ;; option for octave
 (setq auto-mode-alist
