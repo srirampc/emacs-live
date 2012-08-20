@@ -438,7 +438,7 @@ Copyright (C) 2009 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/srirampc/dot-emacs/packs/writing/lib/auctex-11.86'
+ac_pwd='/home/srirampc/emacs-live/packs/writing/lib/auctex'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 test -n "$AWK" || AWK=awk
@@ -598,9 +598,9 @@ S["TEXI2DVI"]="/usr/bin/texi2dvi"
 S["TEXI2HTML"]="/usr/bin/texi2html"
 S["MAKEINFO"]="/usr/bin/makeinfo"
 S["PERL"]="/usr/bin/perl"
-S["DVIPS"]="/usr/local/texlive/2011/bin/x86_64-linux/dvips"
-S["PDFTEX"]="/usr/local/texlive/2011/bin/x86_64-linux/pdftex"
-S["TEX"]="/usr/local/texlive/2011/bin/x86_64-linux/tex"
+S["DVIPS"]="/usr/local/texlive/2012/bin/x86_64-linux/dvips"
+S["PDFTEX"]="/usr/local/texlive/2012/bin/x86_64-linux/pdftex"
+S["TEX"]="/usr/local/texlive/2012/bin/x86_64-linux/tex"
 S["lispautodir"]="\"/usr/local/var/auctex\""
 S["autodir"]="${localstatedir}/auctex"
 S["texsite"]=""
