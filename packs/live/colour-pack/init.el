@@ -7,6 +7,11 @@
 ;; use blackbored colour theme
 (load-file (concat (live-pack-lib-dir) "cyberpunk.el"))
 (load-file (concat (live-pack-lib-dir) "gandalf.el"))
+<<<<<<< HEAD
 ;(color-theme-cyberpunk)
+=======
+
+(color-theme-cyberpunk)
+>>>>>>> upstream/master
 
 ;(set-cursor-color "yellow")
