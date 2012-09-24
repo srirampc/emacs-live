@@ -6,6 +6,5 @@
 (live-load-config-file "highlight-flash-conf.el")
 (live-load-config-file "clojure-conf.el")
 (live-load-config-file "slime-conf.el")
-;; auto-complete makes emacs 24 crash :(
-;; (live-load-config-file "auto-complete-conf.el")
+(live-load-config-file "auto-complete-conf.el")
 (live-load-config-file "overtone-conf.el")
