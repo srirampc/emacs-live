@@ -11,3 +11,9 @@
 (global-set-key "\C-c\C-k" 'kill-region)
 (global-set-key "\C-c\C-g" 'goto-line)
 (global-set-key "\C-x\C-g" 'goto-line)
+
+;;(setq frame-title-format '("" "%b @ " (getenv "USERNAME")))
+(setq frame-title-format
+      '(buffer-file-name
+        "%f"
+        (dired-directory dired-directory "%b")))
