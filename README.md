@@ -1,25 +1,39 @@
 # Changes w.r.t emacs-live
 
-The following packs are added on top Emacs Live
+The following packs are added on top overtone/emacs-live
 
-1. Power   
+1. Power
   - eproject
   - anything
-2. Programming 
+2. Programming
   - ess : Emacs Speaks Statistics
-  - python-mode      
+  - python-mode
+  - pymacs
   - ipython
   - sass-mode
-  - yaml-mode  
-  - haskell-mode  
+  - yaml-mode
+  - haskell-mode
   - a bit of cc-mode config
-3. Writing     
-  - AUCTeX     
+3. Writing
+  - AUCTeX
   - pandoc-mode
   - a bit of org-mode config
 
 This repo contains packages written by many different authors. Copyright belongs to the respective authors.
 
+# Software Dependencies
+
+1. Python and related
+  - python 2.7
+  - ropemacs
+  - rope
+  - Pymacs
+2. ESS
+  - R
+3. AUCTeX
+  - LiveTeX
+
+# End of README for srirampc's modifications
 
 <img src="http://github.com/downloads/overtone/emacs-live/emacs-live.png" />
 
