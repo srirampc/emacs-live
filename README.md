@@ -1,6 +1,10 @@
-# Changes w.r.t emacs-live
+# Modifications to emacs-live
 
-The following packs are added on top overtone/emacs-live
+0. Live
+  - update auto-complete to latest version
+    (because emacs-ipython-notebook wants to!)
+
+# Custom additions to emacs-live
 
 1. Power
   - eproject
@@ -9,7 +13,8 @@ The following packs are added on top overtone/emacs-live
   - ess : Emacs Speaks Statistics
   - python-mode
   - pymacs
-  - ipython
+  - emacs-ipython-notebook 
+     (and its dependencies) 
   - sass-mode
   - yaml-mode
   - haskell-mode
@@ -19,8 +24,6 @@ The following packs are added on top overtone/emacs-live
   - pandoc-mode
   - a bit of org-mode config
 
-This repo contains packages written by many different authors. Copyright belongs to the respective authors.
-
 # Software Dependencies
 
 1. Python and related
@@ -28,12 +31,19 @@ This repo contains packages written by many different authors. Copyright belongs
   - ropemacs
   - rope
   - Pymacs
+  - ipython >= 0.13 with notebook
 2. ESS
   - R
 3. AUCTeX
   - LiveTeX
 
-# End of README for srirampc's modifications
+# Notice
+
+This repository contains works of many authors. Copyright belong to
+the respective authors. 
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 <img src="http://github.com/downloads/overtone/emacs-live/emacs-live.png" />
 
