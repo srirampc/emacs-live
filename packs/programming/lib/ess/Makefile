@@ -1,175 +1,127 @@
-### Makefile - for compiled e-lisp of ESS distribution.
-###
+## Top Level Makefile
 
 ## Before making changes here, please take a look at Makeconf
-include ../Makeconf
+include ./Makeconf
 
-## For noweb extraction of code and documentation.
+## This is the default target, i.e. 'make' and 'make all' are the same.
+all install uninstall: etc/SVN-REVISION
+	cd etc; $(MAKE) $@
+	cd lisp; $(MAKE) $@
+	cd doc; $(MAKE) $@
 
-NOTANGLE=notangle -L
-#NOTANGLE=notangle for no indexing.
-NOWEAVE=noweave
+lisp: etc/SVN-REVISION
+	cd lisp; $(MAKE)
 
-## SUFFIXES are in ../Makeconf :
-.nw.html: ;     $(NOWEAVE) -filter l2h -index -html $*.nw > $*.html
-.nw.tex: ;      $(NOWEAVE) -index -delay $*.nw | cpif $*.tex
-.nw.el:  ;      $(NOTANGLE) -R$*.el | cpif $*.el
-##.nw.c:  ;       $(NOTANGLE) -R$*.c | cpif $*.c
-##.nw.h:  ;       $(NOTANGLE) -R$*.h | cpif $*.h
-.tex.dvi: ;     latex '\scrollmode \input '"$*"; while grep -s 'Rerun to get cross-references right' $*.log; do latex '\scrollmode \input '"$*"; done
+## the rest of the targets are for ESS developer's use only :
 
-# have to preload the files that contain macro definitions or the
-# byte compiler will compile everything that references them
-# incorrectly.  also preload a file that sets byte compiler options.
-PRELOADS = -l ./ess-comp.el
-
-
-## files that contain key macro definitions.  almost everything
-## depends on them because the byte-compiler inlines macro expansions.
-## everything also depends on the byte compiler options file since
-## this might do odd things like turn off certain compiler
-## optimizations.  When these change, RECOMPILE.
-CORE = ess.elc ess-site.elc
-
-### Everything but ess-debug.el, ess-install.el
-###		  ess-send.el , ess-send2.el
-### DEPRECATED:  essl-bug.el
-##
-ELC = $(CORE) ess-comp.elc ess-custom.elc \
-	ess-dde.elc ess-compat.elc ess-font-lock.elc \
-	ess-help.elc ess-inf.elc ess-mode.elc \
-	ess-menu.elc ess-mouse.elc mouseme.elc \
-	ess-swv.elc ess-toolbar.elc \
-	ess-trns.elc ess-utils.elc \
-	essd-els.elc \
-	ess-lsp-l.elc ess-xls-d.elc ess-vst-d.elc ess-arc-d.elc \
-	ess-sas-l.elc ess-sas-d.elc ess-sas-a.elc \
-	ess-sta-l.elc ess-sta-d.elc make-regexp.elc \
-	ess-omg-l.elc ess-omg-d.elc \
-	ess-bugs-l.elc ess-bugs-d.elc ess-jags-d.elc \
-	ess-noweb.elc noweb-mode.elc noweb-font-lock-mode.elc \
-	ess-eldoc.elc ess-roxy.elc ess-rutils.elc \
-	ess-s-l.elc ess-s3-d.elc ess-s4-d.elc \
-	ess-sp3-d.elc ess-sp4-d.elc ess-sp5-d.elc ess-sp6-d.elc \
-	ess-r-d.elc ess-rdired.elc ess-r-args.elc ess-r-d.elc ess-rd.elc \
-	ess-sp6w-d.elc msdos.elc
-##      ^^^^^^^^^^^^^^^^^^^^^^^ Windows only (but be platform-oblivious)
-
-### Targets
-
-all: $(ELC)
-
-install: $(ELC)
-	-$(INSTALLDIR) $(LISPDIR)
-	$(INSTALL) ChangeLog *.elc $(LISPDIR)
-	export J; for I in *.elc; do J=$$I; $(INSTALL) `basename $$J .elc`.el $(LISPDIR); done
-#	test "$(LISPDIR)" = "." || $(INSTALL) *.elc $(LISPDIR)
-
-dist: ess-custom.el
-	@touch dist
-## svn committing happens in ../Makefile
-
-clean:
-	rm -f $(ELC) \
-	ess-cust.elc ess-emcs.elc essl-bug.elc \
-	essl-sas.elc essd-sas.elc essa-sas.elc \
-	essl-bugs.elc essd-bugs.elc essd-jags.elc \
-	essl-sta.elc essd-sta.elc \
-	essl-s.elc essd-s3.elc essd-s4.elc \
-	essd-sp3.elc essd-sp4.elc essd-sp5.elc essd-sp6.elc \
-	essd-r.elc essd-r-args.elc essa-r.elc essddr.elc \
-	essd-sp6w.elc \
-	essd-arc.elc essd-omg.elc essd-vst.elc essd-xls.elc essl-lsp.elc essl-omg.elc ess-mous.elc
-
-distclean: clean
-# and potentially more
+# VERSION:
+# 	@echo "$(ESSVERSION)" > $@
+## Hmm, this is a bit brittle ... but for distribution, there's no problem
+etc/SVN-REVISION etc/SVN-REVISION-tmp: VERSION lisp/*.el doc/*.texi */Makefile Makefile Makeconf
+	(LC_ALL=C TZ=GMT svn info || $(ECHO) "Revision: unknown") 2> /dev/null \
+	    | sed -n -e '/^Revision/p' -e '/^Last Changed Date/'p \
+	    | cut -d' ' -f1,2,3,4 > $@-tmp
+	if [ -s $@-tmp ]; then mv $@-tmp $@ ; elif [ ! -e $@ ]; then echo 'not available' > $@ ; fi
 
 
-### Targets below here are only for developers - and these must have perl
+## --- PRE-release ---
 
-### Replace Version numbers (as in ../doc/Makefile !):
-ess-custom.el: ../VERSION
-	perl -pi -e 's/".*"/"$(ESSVERSION)"/ if /ess-version/' $@
+# new target to create .tgz and .zip files only
+# run in the foreground so you can accept the certificate
+# for real men
+# GNUTAR=gtar make downloads
+downloads: all RPM.spec cleanup-dist
+	[ x$(ESSfromSVN) = xyes ] || (echo 'ESS must be "from SVN"'; exit 1 )
+	@echo "**********************************************************"
+	@echo "** Making distribution of ESS for release $(ESSVERSION),"
+	@echo "** from $(ESSDIR)"
+	@echo "** (must have setup subversion with cached authentication, prior for security)"
+	@echo "**********************************************************"
+	@echo "** Exporting Files **"
+	svn checkout --quiet $(SVN_URL)/trunk $(ESSDIR)-svn
+	mkdir -p $(ESSDIR)
+	(cd $(ESSDIR)-svn; $(GNUTAR) cvf - --exclude=.svn --no-wildcards .) | (cd $(ESSDIR); $(GNUTAR) xf - )
+	@echo "** Clean-up docs, Make docs, and Correct Write Permissions **"
+	CLEANUP="user-* useR-* Why_* README.*"; \
+	 cd $(ESSDIR)/doc; chmod -R u+w $$CLEANUP; rm -rf $$CLEANUP; \
+	 $(MAKE) all cleanaux ; cd ../..
+	svn cleanup
+	cd lisp; $(MAKE) ess-custom.el; cp ess-custom.el ../$(ESSDIR)/lisp/; cd ..
+         # touch: make it newer than VERSION in the tarball:
+	sr=etc/SVN-REVISION ; touch $$sr ; cp -p $$sr $(ESSDIR)/etc/
+	cp -p RPM.spec $(ESSDIR)/
+	chmod a-w $(ESSDIR)/lisp/*.el
+	chmod u+w $(ESSDIR)/lisp/ess-site.el $(ESSDIR)/Make* $(ESSDIR)/*/Makefile
+	@echo "** Creating .tgz file **"
+	test -f $(ESSDIR).tgz && rm -rf $(ESSDIR).tgz || true
+	$(GNUTAR) hcvofz $(ESSDIR).tgz $(ESSDIR)
+	@echo "** Creating .zip file **"
+	test -f $(ESSDIR).zip && rm -rf $(ESSDIR).zip || true
+	zip -r $(ESSDIR).zip $(ESSDIR)
+
+dist: VERSION downloads
+	grep -E 'defvar ess-(version|revision)' lisp/ess-custom.el \
+	  $(ESSDIR)/lisp/ess-custom.el
+	touch $@
+
+.PHONY: cleanup-dist cleanup-rel
+cleanup-dist:
+	@echo "** Cleaning up **"
+	(if [ -d $(ESSDIR) ] ; then \
+	  chmod -R u+w $(ESSDIR) $(ESSDIR)-svn && rm -rf $(ESSDIR) $(ESSDIR)-svn; fi)
+##  should only be called manually (if at all):
+cleanup-rel:
+	@rm -f dist lisp/dist $(ESSDIR)*
+
+%.spec: %.spec.in VERSION
+	sed 's/@@VERSION@@/$(ESSVERSION)/g' $< > $@
 
 
-### File Dependencies
+## --- RELEASE ---
 
-.el.elc:
-	$(EMACSBATCH) $(PRELOADS) -f batch-byte-compile $<
+## NB: Typically use  'make -W VERSION ChangeLog' before 'make rel'   <<---- MUST ---
+##	since          ~~~~~~~~~~~~~~~~~~~~~~~~~
+## 	ChangeLog often ends up newer than VERSION
+ChangeLog: VERSION
+	@echo "** Adding log-entry to ChangeLog file"
+	mv ChangeLog ChangeLog.old
+	(echo `date "+%Y-%m-%d "` \
+	     " ESS Maintainers <ESS-core@r-project.org>" ; \
+	 echo; echo "  * Version $(ESSVERSION) released."; echo; \
+	 cat ChangeLog.old ) > ChangeLog
+	@rm ChangeLog.old
+	svn commit -m 'Version $(ESSVERSION)' ChangeLog
+
+rel: ChangeLog dist tag homepage
+	[ x$$USER = xmaechler ] || (echo 'must be maechler'; exit 1 )
+	@echo "** Placing .tgz and .zip files **"
+	cp -p $(ESSDIR).tgz $(ESSDIR).zip $(UPLOAD_DIR)
+	@echo "** Creating LATEST.IS. file **"
+	rm -f $(UPLOAD_DIR)/LATEST.IS.*
+	touch $(UPLOAD_DIR)/LATEST.IS.$(ESSDIR)
+	@echo "If all is perfect, eventually call   'make cleanup-rel'"
+
+tag:
+	@echo "** Tagging the release **"
+	svn cp -m'release tagging' $(SVN_URL)/trunk $(SVN_URL)/tags/$(ESSVERSION)
+homepage:
+	@echo "** Updating ESS Webpage **"
+	[ x$$USER = xmaechler ] || (echo 'must be maechler'; exit 1 )
+	cd $(ESS_HOMEPAGE); ./update-VERSION $(ESSVERSION)
+
+## TODO (when MM has GPG set up properly): add this to 'rel'
+.PHONY: buildrpm
+buildrpm: dist
+	rpmbuild -ta --sign $(ESSDIR).tgz
+
+builddeb:
+	dpkg-buildpackage -uc -us -rfakeroot -tc
 
 
-ess-custom.elc: ess-custom.el ess-comp.el
-	$(EMACSBATCH) $(PRELOADS) -f batch-byte-compile ess-custom.el
-
-ess.elc: ess.el ess-comp.el ess-custom.elc
-	$(EMACSBATCH) $(PRELOADS) -l ess-custom.elc -f batch-byte-compile ess.el
-
-ess-site.elc: ess-site.el ess.elc
-
-ess-inf.elc: ess-inf.el ess-comp.el $(CORE)
-# 	@echo " "
-# 	@echo "For the next compile, please disregard the messages"
-# 	@echo " ** the function set-keymap-parent is not known to be defined."
-# 	@echo " ** assignment to free variable comint-last-input-end"
-# 	@echo "from the byte compiler if they occur. It is completely normal."
-	$(EMACSBATCH) $(PRELOADS) -f batch-byte-compile ess-inf.el
-
-
-ess-mode.elc: ess-mode.el ess-comp.el $(CORE)
-	$(EMACSBATCH) $(PRELOADS) -f batch-byte-compile ess-mode.el
-
-ess-trns.elc: ess-trns.el ess-comp.el $(CORE)
-	$(EMACSBATCH) $(PRELOADS) -f batch-byte-compile ess-trns.el
-
-ess-help.elc: ess-help.el $(CORE)
-
-## S languages
-
-ess-s-l.elc : ess-s-l.el ess.elc
-
-ess-sas-d.elc : ess-sas-d.el ess.elc
-
-ess-s3-d.elc : ess-s3-d.el ess-s-l.elc ess.elc
-
-ess-sp3-d.elc : ess-sp3-d.el ess-s-l.elc ess.elc
-
-ess-s4-d.elc : ess-s4-d.el ess-s-l.elc ess.elc
-
-ess-r-d.elc : ess-r-d.el ess-s-l.elc ess.elc
-
-ess-swv.elc: ess-swv.el ess-noweb.elc
-
-## Lisp Languages
-
-ess-lsp-l.elc : ess-lsp-l.el ess.elc
-
-ess-xls-d.elc : ess-xls-d.el ess-lsp-l.elc ess.elc
-
-ess-vst-d.elc : ess-vst-d.el ess-lsp-l.elc ess.elc
-
-## SAS
-
-ess-sas-l.elc : ess-sas-l.el ess-sas-a.el ess.elc
-
-ess-sas-d.elc : ess-sas-d.el ess-sas-l.elc ess.elc
-
-## Stata
-
-ess-sta-l.elc : ess-sta-l.el ess.elc
-
-ess-sta-d.elc : ess-sta-d.el ess.elc
-
-## BUGS
-
-ess-bugs-l.elc : ess-bugs-l.el ess-compat.elc
-
-ess-bugs-d.elc : ess-bugs-d.el ess-bugs-l.elc
-
-## JAGS
-
-ess-jags-d.elc : ess-jags-d.el ess-bugs-l.elc ess-utils.elc ess-inf.elc
-
-# Ignore this.
-#(defun S-insert-make-rule (file)
-#  (interactive "sFile:")
-#  (insert (format "%s.elc:  %s.el $(CORE)\n\t@echo compiling %s.el...\n\t@$(EMACSBATCH) $(PRELOADS) -f batch-byte-compile %s.el" file file file file)))
+## 'clean'     shall remove *exactly* those things that are *not* in version control
+## 'distclean' removes also things in VC (svn, when they are remade by "make"):
+clean distclean: cleanup-dist
+	cd etc; $(MAKE) $@
+	cd lisp; $(MAKE) $@
+	cd doc; $(MAKE) $@
+	rm -f etc/SVN-REVISION* dist
