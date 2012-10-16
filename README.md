@@ -21,6 +21,8 @@
   - a bit of cc-mode config
 3. Writing
   - AUCTeX
+  - auto-complete-latex
+  - ac-source-ispell
   - pandoc-mode
   - a bit of org-mode config
 
@@ -36,6 +38,7 @@
   - R
 3. AUCTeX
   - LiveTeX
+4. Other dependencies for emacs-live
 
 # Notice
 
