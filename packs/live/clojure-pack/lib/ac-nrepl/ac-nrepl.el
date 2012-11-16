@@ -1,11 +1,12 @@
-;;; ac-nrepl.el --- An auto-complete source for Clojure using nrepl completions
+;;; ac-nrepl.el --- auto-complete sources for Clojure using nrepl completions
 
 ;; Copyright (C) 2012  Steve Purcell <steve@sanityinc.com>
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
+;;         Sam Aaron <samaaron@gmail.com>
 ;; URL: https://github.com/purcell/ac-nrepl
 ;; Keywords: languages, clojure, nrepl
-;; Version: 0.1
+;; Version: DEV
 ;; Package-Requires: ((nrepl "0.1") (auto-complete "1.4"))
 
 ;; This program is free software; you can redistribute it and/or
@@ -23,7 +24,8 @@
 
 ;;; Commentary:
 
-;; Based ac-slime
+;; Provides a number of auto-complete sources for Clojure projects
+;; using nrepl.
 
 ;;; Installation:
 
@@ -62,7 +64,7 @@
 
 (defun ac-nrepl-candidates* (clj)
   "Return completion candidates produced by evaluating CLJ."
-  (let ((response (plist-get (nrepl-send-string-sync clj (nrepl-current-ns)) :value)))
+  (let ((response (plist-get (nrepl-send-string-sync (concat "(require 'complete.core) " clj) (nrepl-current-ns)) :value)))
     (when response
       (car (read-from-string response)))))
 
@@ -116,21 +118,24 @@
   "Clear the class cache to prevent stale results."
   (setq ac-nrepl-all-classes-cache nil))
 
-;;;###autoload
-(add-hook 'nrepl-connected-hook 'ac-nrepl-clear-class-cache)
-
 (defun ac-nrepl-cache-all-classes ()
   "Return a cached list of all class names loaded in the JVM backend."
-  (if (eq '() ac-nrepl-all-classes-cache)
-    (progn
-      (message "Caching matching JVM classes...")
-      (setq ac-nrepl-all-classes-cache (ac-nrepl-fetch-all-classes)) )
-    ac-nrepl-all-classes-cache))
+  (setq ac-nrepl-all-classes-cache (ac-nrepl-fetch-all-classes)))
+
+(defun ac-nrepl-refresh-class-cache ()
+  "Refresh class cache"
+  (ac-nrepl-clear-class-cache)
+  (message "Caching JVM class names...")
+  (ac-nrepl-cache-all-classes)
+  (message ""))
+
+;;;###autoload
+(add-hook 'nrepl-connected-hook 'ac-nrepl-refresh-class-cache)
 
 (defun ac-nrepl-candidates-all-classes ()
   "Return java method candidates."
   (when (string-match-p "^[a-zA-Z]+[a-zA-Z0-9$_]*\\.[a-zA-Z0-9$_.]*$" ac-prefix)
-    (ac-nrepl-cache-all-classes)))
+    ac-nrepl-all-classes-cache))
 
 (defun ac-nrepl-candidates-java-methods ()
   "Return java method candidates."
@@ -150,7 +155,8 @@
          '()
           (let [scope (symbol (first (.split prefix \"/\")))]
             (map (fn [memb] (str scope \"/\" memb))
-                 (when-let [class (complete.core/resolve-class scope)]
+                 (when-let [class (try (complete.core/resolve-class scope)
+                                   (catch java.lang.ClassNotFoundException e nil))]
                    (complete.core/static-members class))))))  ")))
 
 (defun ac-nrepl-documentation (symbol)

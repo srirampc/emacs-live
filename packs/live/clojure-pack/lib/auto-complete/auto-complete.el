@@ -186,7 +186,7 @@
 (defcustom ac-modes
   '(emacs-lisp-mode lisp-mode lisp-interaction-mode
     slime-repl-mode
-    c-mode cc-mode c++-mode
+    c-mode cc-mode c++-mode go-mode
     java-mode malabar-mode clojure-mode clojurescript-mode  scala-mode
     scheme-mode
     ocaml-mode tuareg-mode coq-mode haskell-mode agda-mode agda2-mode
@@ -195,7 +195,8 @@
     makefile-mode sh-mode fortran-mode f90-mode ada-mode
     xml-mode sgml-mode
     ts-mode
-    sclang-mode)
+    sclang-mode
+    verilog-mode)
   "Major modes `auto-complete-mode' can run on."
   :type '(repeat symbol)
   :group 'auto-complete)
@@ -286,11 +287,6 @@ a prefix doen't contain any upper case letters."
 
 (defcustom ac-use-overriding-local-map nil
   "Non-nil means `overriding-local-map' will be used to hack for overriding key events on auto-copletion."
-  :type 'boolean
-  :group 'auto-complete)
-
-(defcustom ac-disable-inline nil
-  "Non-nil disable inline completion visibility"
   :type 'boolean
   :group 'auto-complete)
 
@@ -1079,7 +1075,7 @@ You can not use it in source definition like (prefix . `NAME')."
     (ac-inline-update))
   (popup-set-list ac-menu ac-candidates)
   (if (and (not ac-fuzzy-enable)
-           (<= (length ac-candidates) 1))
+           (<= (length ac-candidates) ac-candidate-menu-min))
       (popup-hide ac-menu)
     (if ac-show-menu
         (popup-draw ac-menu))))
@@ -1148,7 +1144,10 @@ You can not use it in source definition like (prefix . `NAME')."
   "Expand `STRING' into the buffer and update `ac-prefix' to `STRING'.
 This function records deletion and insertion sequences by `undo-boundary'.
 If `remove-undo-boundary' is non-nil, this function also removes `undo-boundary'
-that have been made before in this function."
+that have been made before in this function.  When `buffer-undo-list' is
+`t', `remove-undo-boundary' has no effect."
+  (when (eq buffer-undo-list t)
+    (setq remove-undo-boundary nil))
   (when (not (equal string (buffer-substring ac-point (point))))
     (undo-boundary)
     ;; We can't use primitive-undo since it undoes by
@@ -1306,7 +1305,9 @@ that have been made before in this function."
   (interactive)
   ;; TODO don't use FORCE
   (when (and (or force
-                 (called-interactively-p)
+                 (with-no-warnings
+                   ;; called-interactively-p can take no args
+                   (called-interactively-p))
                  ;; ac-isearch'ing
                  (null this-command))
              (ac-menu-live-p)
@@ -1390,7 +1391,7 @@ that have been made before in this function."
       (if (or ac-show-menu-immediately-on-auto-complete
               inline-live)
           (setq ac-show-menu t))
-      (ac-start))
+      (ac-start :triggered 'manual))
     (when (ac-update-greedy t)
       ;; TODO Not to cause inline completion to be disrupted.
       (if (ac-inline-live-p)
@@ -1496,7 +1497,8 @@ that have been made before in this function."
 
 (defun* ac-start (&key
                   requires
-                  force-init)
+                  force-init
+                  (triggered (or ac-triggered t)))
   "Start completion."
   (interactive)
   (if (not auto-complete-mode)
@@ -1510,7 +1512,8 @@ that have been made before in this function."
       (if (or (null point)
               (progn
                 (setq prefix (buffer-substring-no-properties point (point)))
-                (ac-stop-word-p prefix)))
+                (and (not (eq triggered 'manual))
+                     (ac-stop-word-p prefix))))
           (prog1 nil
             (ac-abort))
         (unless ac-cursor-color
@@ -1521,7 +1524,7 @@ that have been made before in this function."
               ac-point point
               ac-prefix prefix
               ac-limit ac-candidate-limit
-              ac-triggered t
+              ac-triggered triggered
               ac-current-prefix-def prefix-def)
         (when (or init (null ac-prefix-overlay))
           (ac-init))
@@ -1653,8 +1656,8 @@ that have been made before in this function."
                  (not isearch-mode))
         (setq ac-last-point (point))
         (ac-start :requires (unless ac-completing ac-auto-start))
-	(unless ac-disable-inline
-	  (ac-inline-update)))
+        (unless ac-disable-inline
+          (ac-inline-update)))
     (error (ac-error var))))
 
 (defun ac-setup ()
@@ -1726,8 +1729,11 @@ completion menu. This workaround stops that annoying behavior."
   "Source definition macro. It defines a complete command also."
   (declare (indent 1))
   `(progn
-     (defvar ,(intern (format "ac-source-%s" name))
-       ,source)
+     (defvar ,(intern (format "ac-source-%s" name)))
+     ;; Use `setq' to reset ac-source-NAME every time
+     ;; `ac-define-source' is called.  This is useful, for example
+     ;; when evaluating `ac-define-source' using C-M-x (`eval-defun').
+     (setq ,(intern (format "ac-source-%s" name)) ,source)
      (defun ,(intern (format "ac-complete-%s" name)) ()
        (interactive)
        (auto-complete '(,(intern (format "ac-source-%s" name)))))))

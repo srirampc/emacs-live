@@ -36,7 +36,7 @@ active. To do this, put the following code in your emacs init file to
      (eval-after-load "auto-complete"
        '(add-to-list 'ac-modes 'nrepl-mode))
 
-If you want to trigger `auto-complete` using TAB in nrepl buffers, you may
+If you want to trigger `auto-complete` using <kbd>TAB</kbd> in nrepl buffers, you may
 want to put `auto-complete` into your `completion-at-point-functions`:
 
     (defun set-auto-complete-as-completion-at-point-function ()
@@ -63,6 +63,12 @@ for the completed symbol should also be displayed.
 [marmalade]: http://marmalade-repo.org
 [melpa]: http://melpa.milkbox.net
 
+Acknowledgements
+================
+
+Many thanks to the following contributors:
+
+* [Sam Aaron](https://github.com/samaaron)
 
 
 <hr>
