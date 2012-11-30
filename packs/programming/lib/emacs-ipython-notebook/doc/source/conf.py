@@ -89,6 +89,7 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+highlight_language = 'cl'
 
 # -- Options for HTML output ---------------------------------------------------
 
@@ -249,7 +250,6 @@ texinfo_documents = [
 
 # -- Options for EL domain -----------------------------------------------------
 
-emacs_executable = 'emacs-snapshot'
 elisp_packages = {
     'ein': 'ein:',
     'helm': 'helm-',

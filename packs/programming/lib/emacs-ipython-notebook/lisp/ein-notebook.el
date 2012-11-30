@@ -486,7 +486,7 @@ This is equivalent to do ``C-c`` in the console program."
 (defun ein:notebook-test-notebook-name (name)
   (and (stringp name)
        (> (length name) 0)
-       (not (string-match "[\\/\\\\]" name))))
+       (not (string-match "[\\/\\\\:]" name))))
 
 (defun* ein:notebook--worksheet-new (notebook
                                      &optional (func #'ein:worksheet-new))
@@ -924,6 +924,15 @@ When used as a lisp function, delete worksheet WS from NOTEBOOk."
   (assert (ein:worksheet-p ws) nil "Not worksheet.")
   (setf (ein:$notebook-worksheets notebook)
         (ein:list-move-right (ein:$notebook-worksheets notebook) ws)))
+
+(defun* ein:notebook-worksheet-index
+    (&optional (notebook ein:%notebook%)
+               (ws ein:%worksheet%))
+  "Return an index of the worksheet WS in NOTEBOOK."
+  (loop for i from 0
+        for ith-ws in (ein:$notebook-worksheets notebook)
+        when (eq ith-ws ws)
+        return i))
 
 
 ;;; Scratch sheet
