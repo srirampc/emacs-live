@@ -136,7 +136,7 @@
 (global-set-key (kbd "C-SPC") 'set-mark-command)
 
 ;;repeat previous command
-(global-set-key (kbd "C-v") 'repeat)
+;;(global-set-key (kbd "C-v") 'repeat)
 
 ;;scroll other window
 (global-set-key (kbd "C-M-]") 'scroll-other-window)

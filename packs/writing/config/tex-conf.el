@@ -14,6 +14,6 @@
 (setq ac-l-dict-directory
       (concat (live-pack-lib-dir) "auto-complete-latex/" "ac-l-dict/"))
 (add-to-list 'ac-modes 'latex-mode)
-(add-hook 'LaTeX-mode-hook 'ac-l-setup)
+(add-hook 'latex-mode-hook 'ac-l-setup)
 
 (require 'ac-source-ispell)
