@@ -180,7 +180,7 @@ Emacs live ships with a few packs:
 
 A set of defaults to create a clutter free, friendly and more dynamic
 Emacs foundation. Also adds fuzzy matching autocomplete functionality
-for most of the Emacs minibuffer action - such as finding files, calling
+for most of the Emacs minibuffer actions - such as finding files, calling
 functions and switching buffers.
 
 #### Colour
@@ -232,7 +232,7 @@ By default, Emacs live will load the packs in the following order:
 2. `live/colour-pack`
 3. `live/clojure-pack`
 4. `live/lang-pack`
-5.  `live/power-pack`
+5. `live/power-pack`
 
 However, you may create a `~/.emacs-live.el` file to override this
 behaviour. Simply set the var live-packs to a list of symbols
@@ -263,8 +263,12 @@ within your own live packs:
 It is recommended that you place your own personal packs in an external
 directory. See the `user/template-pack`'s README for more information.
 
-## Feedback
+## Mailing List
 
 I'm very happy to hear any feedback regarding this config. The idea is
 for you to use it to get started and give you a platform to start
 editing it and turning it into something personal.
+
+Please make any comments on the Emacs Live mailing list:
+
+http://groups.google.com/group/emacs-live

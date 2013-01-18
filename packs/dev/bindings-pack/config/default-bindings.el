@@ -84,6 +84,7 @@
 (define-key paredit-mode-map (kbd "C-c l w") 'paredit-splice-sexp-killing-backward)
 (define-key paredit-mode-map (kbd "C-c l l") 'align-cljlet)
 (define-key paredit-mode-map (kbd "C-c l t") 'fill-paragraph)
+(define-key paredit-mode-map (kbd "C-c l j") 'live-paredit-forward-slurp-sexp-neatly)
 (define-key paredit-mode-map (kbd "C-M-e") 'paredit-backward-barf-sexp)
 (define-key paredit-mode-map (kbd "C-M-s") 'paredit-backward-slurp-sexp)
 (define-key paredit-mode-map (kbd "C-M-j") 'live-paredit-forward-slurp-sexp-neatly)
@@ -103,15 +104,13 @@
 ;;browse kill ring (visual paste)
 (global-set-key (kbd "M-y") 'browse-kill-ring)
 
-;;make C-] and M-] cut and copy respectively
+;;make C-\ and M-\ cut and copy respectively
 (global-set-key (kbd "C-]") 'kill-region)
 (global-set-key (kbd "M-]") 'kill-ring-save)
 
-;; paste
-(global-set-key (kbd "M-v")  'yank)
-
 ;; undo
 (global-set-key (kbd "C-M-_") 'undo-tree-undo)
+(global-set-key (kbd "C-_") 'undo-tree-undo)
 
 ;;mark current function
 (global-set-key (kbd "C-x C-p")  'mark-defun)
@@ -128,9 +127,9 @@
 
 ;;allow the deletion of words:
 ;;backward kill word (forward kill word is M-d)
-(global-set-key (kbd "C-w") 'backward-kill-word)
-(define-key ido-file-completion-map (kbd "C-w") 'backward-kill-word)
-(define-key paredit-mode-map (kbd "C-w") 'paredit-backward-kill-word)
+(global-set-key (kbd "C-]") 'backward-kill-word)
+(define-key ido-file-completion-map (kbd "C-]") 'backward-kill-word)
+(define-key paredit-mode-map (kbd "C-]") 'paredit-backward-kill-word)
 
 ;;kill line backwards
 (global-set-key (kbd "M-k") 'live-backwards-kill-line)
@@ -142,7 +141,7 @@
 (global-set-key (kbd "C-SPC") 'set-mark-command)
 
 ;;repeat previous command
-(global-set-key (kbd "C-v") 'repeat)
+(global-set-key (kbd "M-'") 'repeat)
 
 ;;scroll other window
 (global-set-key (kbd "C-M-]") 'scroll-other-window)
@@ -206,3 +205,5 @@
 (define-key nrepl-interaction-mode-map (kbd "M-RET") 'nrepl-doc)
 
 (global-set-key (kbd "C-x o") 'win-switch-dispatch)
+
+(global-set-key (kbd "C-x !") 'live-server-kill-terminal)
