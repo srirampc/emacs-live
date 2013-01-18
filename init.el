@@ -95,7 +95,7 @@
 
 (when live-supported-emacsp
 ;; Store live base dirs
-(setq live-root-dir "/home/srirampc/emacs-live/")
+(setq live-root-dir "~/emacs-live/")
 
 (setq
  live-tmp-dir      (file-name-as-directory (concat live-root-dir "tmp"))
