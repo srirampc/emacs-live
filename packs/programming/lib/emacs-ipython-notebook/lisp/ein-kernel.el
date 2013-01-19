@@ -112,7 +112,7 @@
              "?" (format "notebook=%s" notebook-id))
      :type "POST"
      :parser #'ein:json-read
-     :success (cons #'ein:kernel--kernel-started kernel))))
+     :success (apply-partially #'ein:kernel--kernel-started kernel))))
 
 
 (defun ein:kernel-restart (kernel)
@@ -128,17 +128,20 @@
               "restart")
      :type "POST"
      :parser #'ein:json-read
-     :success (cons #'ein:kernel--kernel-started kernel))))
+     :success (apply-partially #'ein:kernel--kernel-started kernel))))
 
 
 (defun* ein:kernel--kernel-started (kernel &key data &allow-other-keys)
-  (ein:log 'info "Kernel started: %s" (plist-get data :kernel_id))
-  (setf (ein:$kernel-running kernel) t)
-  (setf (ein:$kernel-kernel-id kernel) (plist-get data :kernel_id))
-  (setf (ein:$kernel-ws-url kernel) (plist-get data :ws_url))
-  (setf (ein:$kernel-kernel-url kernel)
-        (concat (ein:$kernel-base-url kernel) "/"
-                (ein:$kernel-kernel-id kernel)))
+  (destructuring-bind (&key kernel_id ws_url &allow-other-keys) data
+    (unless (and kernel_id ws_url)
+      (error "Failed to start kernel.  No `kernel_id' or `ws_url'.  Got %S."
+             data))
+    (ein:log 'info "Kernel started: %s" kernel_id)
+    (setf (ein:$kernel-running kernel) t)
+    (setf (ein:$kernel-kernel-id kernel) kernel_id)
+    (setf (ein:$kernel-ws-url kernel) ws_url)
+    (setf (ein:$kernel-kernel-url kernel)
+          (concat (ein:$kernel-base-url kernel) "/" kernel_id)))
   (ein:kernel-start-channels kernel)
   (let ((shell-channel (ein:$kernel-shell-channel kernel))
         (iopub-channel (ein:$kernel-iopub-channel kernel)))
@@ -164,10 +167,11 @@
   The kernel will no longer be responsive.")))
 
 
-(defun ein:kernel-send-cookie (channel)
-  ;; This is required to open channel.  In IPython's kernel.js, it sends
-  ;; `document.cookie'.  This is an empty string anyway.
-  (ein:websocket-send channel ""))
+(defun ein:kernel-send-cookie (channel host)
+  ;; cookie can be an empty string for IPython server with no password,
+  ;; but something must be sent to start channel.
+  (let ((cookie (ein:query-get-cookie host "/")))
+    (ein:websocket-send channel cookie)))
 
 
 (defun ein:kernel--ws-closed-callback (websocket kernel arg)
@@ -201,9 +205,14 @@
             do (setf (ein:$websocket-onclose-args c) (list kernel onclose-arg))
             do (setf (ein:$websocket-onopen c)
                      (lexical-let ((channel c)
-                                   (kernel kernel))
+                                   (kernel kernel)
+                                   (host (let (url-or-port
+                                               (ein:$kernel-url-or-port kernel))
+                                           (if (stringp url-or-port)
+                                               url-or-port
+                                             ein:url-localhost))))
                        (lambda ()
-                         (ein:kernel-send-cookie channel)
+                         (ein:kernel-send-cookie channel host)
                          ;; run `ein:$kernel-after-start-hook' if both
                          ;; channels are ready.
                          (when (ein:kernel-live-p kernel)
@@ -457,6 +466,38 @@ Relevant Python code:
     msg-id))
 
 
+(defun ein:kernel-kernel-info-request (kernel callbacks)
+  "Request core information of KERNEL.
+
+When calling this method pass a CALLBACKS structure of the form::
+
+  (:kernel_info_reply (FUNCTION . ARGUMENT))
+
+Call signature::
+
+  (`funcall' FUNCTION ARGUMENT CONTENT METADATA)
+
+CONTENT and METADATA are given by `kernel_info_reply' message.
+
+`kernel_info_reply' message is documented here:
+http://ipython.org/ipython-doc/dev/development/messaging.html#kernel-info
+
+Example::
+
+  (ein:kernel-kernel-info-request
+   (ein:get-kernel)
+   '(:kernel_info_reply (message . \"CONTENT: %S\\nMETADATA: %S\")))
+"
+  (assert (ein:kernel-live-p kernel) nil "Kernel is not active.")
+  (let* ((msg (ein:kernel--get-msg kernel "kernel_info_request" nil))
+         (msg-id (plist-get (plist-get msg :header) :msg_id)))
+    (ein:websocket-send
+     (ein:$kernel-shell-channel kernel)
+     (json-encode msg))
+    (ein:kernel-set-callbacks-for-msg kernel msg-id callbacks)
+    msg-id))
+
+
 (defun ein:kernel-interrupt (kernel)
   (when (ein:$kernel-running kernel)
     (ein:log 'info "Interrupting kernel")
@@ -466,9 +507,8 @@ Relevant Python code:
               (ein:$kernel-kernel-url kernel)
               "interrupt")
      :type "POST"
-     :success (cons (lambda (&rest ignore)
-                      (ein:log 'info "Sent interruption command."))
-                    nil))))
+     :success (lambda (&rest ignore)
+                (ein:log 'info "Sent interruption command.")))))
 
 
 (defun ein:kernel-kill (kernel &optional callback cbargs)
@@ -477,15 +517,13 @@ Relevant Python code:
      (list 'kernel-kill (ein:$kernel-kernel-id kernel))
      (ein:url (ein:$kernel-url-or-port kernel)
               (ein:$kernel-kernel-url kernel))
-     :cache nil
      :type "DELETE"
-     :success (cons (lambda (packed &rest ignore)
-                      (ein:log 'info "Notebook kernel is killed")
-                      (destructuring-bind (kernel callback cbargs)
-                          packed
-                        (setf (ein:$kernel-running kernel) nil)
-                        (when callback (apply callback cbargs))))
-                    (list kernel callback cbargs)))))
+     :success (apply-partially
+               (lambda (kernel callback cbargs &rest ignore)
+                 (ein:log 'info "Notebook kernel is killed")
+                 (setf (ein:$kernel-running kernel) nil)
+                 (when callback (apply callback cbargs)))
+               kernel callback cbargs))))
 
 
 ;; Reply handlers.

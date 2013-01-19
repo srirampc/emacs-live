@@ -128,6 +128,7 @@ before previous opening parenthesis."
 
 ;;; URL utils
 
+(defvar ein:url-localhost "127.0.0.1")
 (defvar ein:url-localhost-template "http://127.0.0.1:%s")
 
 (defun ein:url (url-or-port &rest paths)
@@ -315,12 +316,23 @@ Adapted from twittering-mode.el's `case-string'."
 
 (defun ein:plist-iter (plist)
   "Return list of (key . value) in PLIST."
+  ;; FIXME: this is not needed.  See: `ein:plist-exclude'.
   (loop for p in plist
         for i from 0
         for key-p = (= (% i 2) 0)
         with key = nil
         if key-p do (setq key p)
         else collect `(,key . ,p)))
+
+(defun ein:plist-exclude (plist keys)
+  "Exclude entries specified by KEYS in PLIST.
+
+Example::
+
+    (ein:plist-exclude '(:a 1 :b 2 :c 3 :d 4) '(:b :c))"
+  (loop for (k v) on plist by 'cddr
+        unless (memq k keys)
+        nconc (list k v)))
 
 (defun ein:hash-keys (table)
   (let (keys)
@@ -413,12 +425,15 @@ Elements are compared using the function TEST (default: `eq')."
    ((boundp obj) (eval obj))
    ((fboundp obj) (funcall obj))))
 
-(defun ein:choose-setting (symbol value)
+(defun ein:choose-setting (symbol value &optional single-p)
   "Choose setting in stored in SYMBOL based on VALUE.
-The value of SYMBOL can be string, alist or function."
+The value of SYMBOL can be string, alist or function.
+SINGLE-P is a function which takes one argument.  It must
+return t when the value of SYMBOL can be used as a setting.
+SINGLE-P is `stringp' by default."
   (let ((setting (eval symbol)))
     (cond
-     ((stringp setting) setting)
+     ((funcall (or single-p 'stringp) setting) setting)
      ((functionp setting) (funcall setting value))
      ((listp setting)
       (ein:get-value (or (assoc-default value setting)
@@ -494,6 +509,16 @@ Use `ein:log' for debugging and logging."
   ;; FIXME: Probably set BUFFER-NAME per notebook?
   ;; FIXME: Call `ein:log' here (but do not display in minibuffer).
   (display-warning 'ein message level))
+
+(defvar ein:display-warning-once--db
+  (make-hash-table :test 'equal))
+
+(defun ein:display-warning-once (message &optional level)
+  "Call `ein:display-warning' once for same MESSAGE and LEVEL."
+  (let ((key (list message level)))
+    (unless (gethash key ein:display-warning-once--db)
+      (ein:display-warning message level)
+      (puthash key t ein:display-warning-once--db))))
 
 (defun ein:get-docstring (function)
   "Return docstring of FUNCTION."

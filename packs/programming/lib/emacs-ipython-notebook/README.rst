@@ -6,7 +6,7 @@
 
 
 .. note:: It is stable enough for my day to day work, but I can't
-          grantee the safety for your notebook data.  So please make
+          guarantee the safety for your notebook data.  So please make
           sure you have backup.
 
 .. |build-status|
@@ -88,6 +88,7 @@ setting.  If you want to try EIN but think preparing all the
 requirements is too much, try this!::
 
    git clone git://github.com/tkf/emacs-ipython-notebook.git
+   cd emacs-ipython-notebook/
    lisp/zeroein.el
 
 This will launch a new Emacs instance.
@@ -103,6 +104,7 @@ Requirements
 
 * IPython_ 0.12 or higher.
 * `websocket.el`_ 0.9
+* `request.el`_ >= 0.2
 * (optional) mumamo_ developmental version:
   It will be automatically loaded when it is on the path.
   The official way to setup path is to load nXhtml_.
@@ -121,10 +123,12 @@ Requirements
   this feature.
 
 Also, EIN heavily relies on standard Emacs libraries including EWOC,
-EIEIO and json.el.  EIN is currently tested in Emacs 24.1.
+EIEIO and json.el.  EIN is currently tested against Emacs 23.3 and 24.3.
+It is known to work in Emacs 23.2, 24.1 and 24.2.
 
 .. _IPython: http://ipython.org/
 .. _websocket.el: https://github.com/ahyatt/emacs-websocket
+.. _request.el: https://github.com/tkf/emacs-request
 .. _mumamo: http://www.emacswiki.org/emacs/MuMaMo
 .. _nXhtml: http://ourcomments.org/Emacs/nXhtml/doc/nxhtml.html
 .. _python.el: https://github.com/fgallina/python.el

@@ -87,6 +87,7 @@ Requirements
 
 * IPython_ 0.12 or higher.
 * `websocket.el`_ 0.9
+* `request.el`_ >= 0.2
 * (optional) mumamo_ developmental version:
   It will be automatically loaded when it is on the path.
   The official way to setup path is to load nXhtml_.
@@ -105,10 +106,12 @@ Requirements
   this feature.
 
 Also, EIN heavily relies on standard Emacs libraries including EWOC,
-EIEIO and json.el.  EIN is currently tested in Emacs 24.1.
+EIEIO and json.el.  EIN is currently tested against Emacs 23.3 and 24.3.
+It is known to work in Emacs 23.2, 24.1 and 24.2.
 
 .. _IPython: http://ipython.org/
 .. _websocket.el: https://github.com/ahyatt/emacs-websocket
+.. _request.el: https://github.com/tkf/emacs-request
 .. _mumamo: http://www.emacswiki.org/emacs/MuMaMo
 .. _nXhtml: http://ourcomments.org/Emacs/nXhtml/doc/nxhtml.html
 .. _python.el: https://github.com/fgallina/python.el
@@ -218,6 +221,7 @@ port or URL of the IPython notebook server.
 .. el:function:: ein:notebooklist-open
 .. el:function:: ein:notebooklist-new-notebook
 .. el:function:: ein:notebooklist-open-notebook-global
+.. el:function:: ein:notebooklist-login
 .. el:function:: ein:junk-new
 
 .. el:keymap:: ein:notebooklist-mode-map
@@ -540,9 +544,27 @@ with :el:symbol:`ein:dev-stop-debug`.
 Change Log
 ==========
 
+v0.2.1
+------
+
+* Add support for `kernel_info` request for IPython kernel protocol,
+  which is introduced by
+  `ipython/ipython#2649 <https://github.com/ipython/ipython/issues/2649>`_.
+  This protocol is not used in EIN anywhere yet.
+* Use request.el_ for smoother experience.
+
 v0.2
 ----
 
+* Preliminary login support.  See :el:symbol:`ein:notebooklist-login`.
+* Code completion in notebook happens *really* automatically.
+  You don't need to hit a key to start completion.
+* :el:symbol:`ein:console-open` works without `python.el`_.
+* Expand code cell output on execution.
+  (`#88 <https://github.com/tkf/emacs-ipython-notebook/issues/88>`_).
+* Improve :el:symbol:`ein:completer-dot-complete` and
+  :el:symbol:`ein:jedi-dot-complete`.  Do not expand common part when
+  inserting dot, to make typing code containing dots less surprising.
 * Add support for Jedi.el_.  See :el:symbol:`ein:jedi-setup`.
 * Add a simple org-mode link support.
 * Add built-in multiple language fontification for notebook:

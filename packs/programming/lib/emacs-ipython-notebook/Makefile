@@ -19,9 +19,13 @@ interactive-testein-default:
 interactive-testein-24:
 	$(TESTEIN) --clean-elc -e emacs-snapshot --no-batch --ipython $(IPYTHON)
 
-ert-compile: ert-clean
-	cd lib/ert/lisp/emacs-lisp/ && \
-		$(EMACS) -Q -L . -batch -f batch-byte-compile *.el
+submodule:
+	git submodule update --init
+
+ERT_DIR = lib/ert/lisp/emacs-lisp
+ert-compile: submodule ert-clean log
+	$(EMACS) -Q -batch -L $(ERT_DIR) \
+		-f batch-byte-compile $(ERT_DIR)/*.el 2> log/ert-compile.log
 
 ert-clean:
 	rm -f lib/ert/lisp/emacs-lisp/*.elc
@@ -41,10 +45,24 @@ env-ipy.0.12.0:
 env-clean:
 	rm -rf env
 
+log:
+	mkdir log
+
 log-clean:
 	rm -rf log
 
 travis-ci-testein: ert-compile env-ipy.$(IPY_VERSION)
+	${MAKE} testein-2
+
+testein-2: testein-2-url-retrieve testein-2-curl
+
+testein-2-curl:
+	EL_REQUEST_BACKEND=curl ${MAKE} testein-1
+
+testein-2-url-retrieve:
+	EL_REQUEST_BACKEND=url-retrieve ${MAKE} testein-1
+
+testein-1:
 	$(EMACS) --version
 	python --version
 	env/ipy.$(IPY_VERSION)/bin/ipython --version

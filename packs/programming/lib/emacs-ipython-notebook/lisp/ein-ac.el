@@ -51,6 +51,7 @@
   (rx (group (| (syntax whitespace)
                 (syntax open-parenthesis)
                 (syntax close-parenthesis)
+                (syntax string-quote) ; Complete files for `open("path/..`
                 bol))
       (? (syntax punctuation))          ; to complete ``~/PATH/...``
       (* (+ (| (syntax word) (syntax symbol)))
@@ -100,13 +101,35 @@
   '((candidates . ein:ac-cache-get-matches)
     (requires . 0)
     (prefix . ein:ac-chunk-beginning)
+    (init . ein:ac-request-in-background)
     (symbol . "c")))
+
+(defun ein:ac-request-in-background ()
+  (ein:and-let* ((kernel (ein:get-kernel)))
+    (ein:completer-complete
+     kernel
+     :callbacks
+     (list :complete_reply
+           (cons (lambda (_ content _)
+                   (ein:ac-prepare-completion (plist-get content :matches)))
+                 nil)))))
 
 
 ;;; Completer interface
 
+(defun ein:ac-prepare-completion (matches)
+  "Prepare `ac-source-ein-direct' using MATCHES from kernel.
+Call this function before calling `auto-complete'."
+  (when matches
+    (setq ein:ac-direct-matches matches)  ; let-binding won't work
+    (setq ein:ac-cache-matches (append matches ein:ac-cache-matches))
+    (run-with-idle-timer 1 nil #'ein:ac-clear-cache)))
+
 (defun* ein:completer-finish-completing-ac
-    (matched-text matches &optional (sources '(ac-source-ein-direct)))
+    (-matched-text-not-used-
+     matches
+     &key (expand ac-expand-on-auto-complete)
+     &allow-other-keys)
   "Invoke completion using `auto-complete'.
 Only the argument MATCHES is used.  MATCHED-TEXT is for
 compatibility with `ein:completer-finish-completing-default'."
@@ -115,11 +138,10 @@ compatibility with `ein:completer-finish-completing-default'."
   ;; checks it anyway.
   (ein:log 'debug "COMPLETER-FINISH-COMPLETING-AC: matched-text=%S matches=%S"
            matched-text matches)
+  (ein:ac-prepare-completion matches)
   (when matches      ; No auto-complete drop-down list when no matches
-    (setq ein:ac-direct-matches matches)  ; let-binding won't work
-    (setq ein:ac-cache-matches (append matches ein:ac-cache-matches))
-    (run-with-idle-timer 1 nil #'ein:ac-clear-cache)
-    (auto-complete sources)))
+    (let ((ac-expand-on-auto-complete expand))
+      (auto-complete '(ac-source-ein-direct)))))
 
 (defun ein:ac-clear-cache ()
   (setq ein:ac-cache-matches
