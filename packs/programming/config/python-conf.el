@@ -100,6 +100,7 @@
 (live-add-pack-lib "nxhtml")
 (live-add-pack-lib "ert")
 (live-add-pack-lib "pos-tip")
+(live-add-pack-lib "emacs-request")
 (live-add-pack-lib "emacs-ipython-notebook/lisp")
 
 (require 'ein)
