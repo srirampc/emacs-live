@@ -109,22 +109,6 @@
 ;;*;; Major mode definition
 
 
-(defvar ess-eval-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "\C-r"    'ess-eval-region)
-    (define-key map "\M-r"    'ess-eval-region-and-go)
-    (define-key map "\C-b"    'ess-eval-buffer)
-    (define-key map "\M-b"    'ess-eval-buffer-and-go)
-    (define-key map "\C-f"    'ess-eval-function)
-    (define-key map "\M-f"    'ess-eval-function-and-go)
-    (define-key map "\C-x"    'ess-eval-function)
-    (define-key map "\C-n"    'ess-eval-line-and-step)
-    (define-key map "\C-j"    'ess-eval-line)
-    (define-key map "\M-j"    'ess-eval-line-and-go)
-    map)
-  "Keymap for ess-eval functions.")
-
-
 (defvar ess-mode-map
   (let ((map (make-sparse-keymap)))
 
@@ -152,15 +136,15 @@
     (define-key map "\C-\M-a"    'ess-goto-beginning-of-function-or-para)
     (define-key map "\C-\M-e"    'ess-goto-end-of-function-or-para)
     (define-key map "\C-xnd"     'ess-narrow-to-defun)
-    (define-key map "\C-c\C-y"   'ess-switch-to-ESS)
-    (define-key map "\C-c\C-z"   'ess-switch-to-end-of-ESS)
+    (define-key map "\C-c\C-y"   'ess-switch-to-ESS-deprecated)
+    (define-key map "\C-c\C-z"   'ess-switch-to-inferior-or-script-buffer)
     (define-key map "\C-c\C-l"   'ess-load-file)
+    (define-key map "\C-c\M-l"   'ess-load-file); alias, as in 'iESS' where C-c C-l is comint-list-*
     (define-key map "\C-c\C-v"   'ess-display-help-on-object)
-    (define-key map "\C-c\C-d"   'ess-dump-object-into-edit-buffer)
     ;;(define-key map "\C-c5\C-d"'ess-dump-object-into-edit-buffer-other-frame)
     (define-key map "\C-c\C-s"   'ess-switch-process) ; use a
     ;; different process for the buffer.
-    (define-key map "\C-c\C-t"   'ess-execute-in-tb)
+    ;; (define-key map "\C-c\C-t"   'ess-execute-in-tb)
     (define-key map "\C-c\t"     'ess-complete-object-name-deprecated)
     ;;M  (define-key map "\C-c\t"        'comint-dynamic-complete-filename)
     (unless (and (featurep 'emacs) (>= emacs-major-version 24))
@@ -181,11 +165,46 @@
     (define-key map "\C-c\C-q"   'ess-quit)
     ;; smart operators; most likely will go in the future into a separate local map
     (define-key map ","          'ess-smart-comma)
-    (define-key map "\C-c\C-e"   ess-eval-map)
-    (define-key map "\C-ch"        'ess-handy-commands)
-    (define-key map "\C-cd"        'ess-dev-map)
+
+    (define-key map "\C-c\C-d"   'ess-doc-map)
+    (define-key map "\C-c\C-e"   'ess-extra-map)
+    (define-key map "\C-c\C-t"   'ess-dev-map)
     map)
   "Keymap for `ess-mode'.")
+
+
+(defvar ess-eval-map
+  (let ((map (make-sparse-keymap)))
+    ;; (define-key map "\C-r"    'ess-eval-region)
+    ;; (define-key map "\M-r"    'ess-eval-region-and-go)
+    ;; (define-key map "\C-b"    'ess-eval-buffer)
+    ;; (define-key map "\M-b"    'ess-eval-buffer-and-go)
+    ;; (define-key map "\C-f"    'ess-eval-function)
+    ;; (define-key map "\M-f"    'ess-eval-function-and-go)
+    ;; (define-key map "\C-x"    'ess-eval-function)
+    ;; (define-key map "\C-n"    'ess-eval-line-and-step)
+    ;; (define-key map "\C-j"    'ess-eval-line)
+    ;; (define-key map "\M-j"    'ess-eval-line-and-go)
+    map)
+  "Keymap for ess-eval functions.")
+(make-obsolete-variable 'ess-eval-map nil "ESS12.09.1")
+
+(defvar ess-extra-map
+  (let (ess-extra-map)
+    (define-prefix-command 'ess-extra-map)
+    (define-key ess-extra-map "\C-d" 'ess-dump-object-into-edit-buffer)
+    (define-key ess-extra-map "d" 'ess-dump-object-into-edit-buffer)
+    (define-key ess-extra-map "\C-t" 'ess-build-tags-for-directory)
+    (define-key ess-extra-map "t" 'ess-build-tags-for-directory)
+    (define-key ess-extra-map "\C-l" 'ess-load-library)
+    (define-key ess-extra-map "l" 'ess-load-library)
+    (define-key ess-extra-map "\C-i" 'ess-install-library)
+    (define-key ess-extra-map "i" 'ess-install-library)
+    ;; (define-key map "C-t" 
+    ess-extra-map)
+  "ESS extra map"
+  )
+
 
 (require 'ess-noweb-mode)
 
@@ -199,12 +218,30 @@
     ["Eval region | func | para & step" ess-eval-region-or-function-or-paragraph-and-step t]
     ["Eval region | line" ess-eval-region-or-line-and-step t]
     ["Enter expression" ess-execute-in-tb                 t]
-    ["Handy commands" ess-handy-commands                  t]
     ;; sub menus
     "------"
-    ("Font Lock"
-     :active ess-font-lock-keywords
-     :filter ess-generate-font-lock-submenu)
+    ("Process"
+     ["Goto end of process buffer"  ess-switch-to-end-of-ESS        t]
+     ["Switch to process buffer"    ess-switch-to-inferior-or-script-buffer t]
+     ["Switch Process"   ess-switch-process              t]
+     ("Start Process"
+      ;; SJE - :help not yet recognised in XEmacs.
+      ["R"     R   t] ;; :help "Start a new R process" :active t
+      ["S"     S   t] ;; :help "Start a new S process" :active t
+      ["Sqpe" Sqpe ess-microsoft-p] ;; :help "Start a new Sqpe process" :active t
+      ["S+6-exisiting" S+6-existing ess-microsoft-p] ;; :help "Access an existing S process" :active t
+      ["SAS"   SAS-menu t] ;;  :help "Start a new SAS process" :active t
+      ;; The following menu item "Other" is a place-holder that will
+      ;; be replaced with the other versions of R and Sqpe that can be run.
+      ;; See `ess-r-versions-create' and ess-site.el
+      ("Other"
+       ["No other R or Sqpe versions" nil nil])
+      ["About"
+       (ess-goto-info "Starting up") t]
+      ;; :help "Read about starting a new ESS process" :active t]
+      )
+     ("Eval visibly "
+      :filter ess--generate-eval-visibly-submenu ))
     "------"
     ("ESS Eval"
      ["Eval region | func | para" ess-eval-region-or-function-or-paragraph t]
@@ -221,6 +258,7 @@
      ["Eval paragraph"   ess-eval-paragraph                t]
      ["Eval paragraph & step" ess-eval-paragraph-and-step      t]
      ["Eval chunk"      ess-eval-chunk           ess-noweb-mode]
+     ["Eval chunk and step"      ess-eval-chunk-and-step  ess-noweb-mode]
      ["Eval thread"     ess-eval-thread          ess-noweb-mode]
      ["About"           (ess-goto-info "Evaluating code") t]
      )
@@ -235,8 +273,6 @@
      ["About"           (ess-goto-info "Evaluating code") t]
      )
     ("Motion"
-     ["Goto end of ESS buffer"  ess-switch-to-end-of-ESS        t]
-     ["Switch to ESS buffer"    ess-switch-to-ESS               t]
      ["Beginning of function or para"   ess-goto-beginning-of-function-or-para       t]
      ["End of function or para"         ess-goto-end-of-function-or-para             t]
      "-----"
@@ -260,26 +296,13 @@
      ["Undo"              undo                                  t]
      ["About"             (ess-goto-info "Edit buffer")         t]
      )
-    ("Start Process"
-     ;; SJE - :help not yet recognised in XEmacs.
-     ["R"     R   t] ;; :help "Start a new R process" :active t
-     ["S"     S   t] ;; :help "Start a new S process" :active t
-     ["Sqpe" Sqpe ess-microsoft-p] ;; :help "Start a new Sqpe process" :active t
-     ["S+6-exisiting" S+6-existing ess-microsoft-p] ;; :help "Access an existing S process" :active t
-     ["SAS"   SAS-menu t] ;;  :help "Start a new SAS process" :active t
-     ;; The following menu item "Other" is a place-holder that will
-     ;; be replaced with the other versions of R and Sqpe that can be run.
-     ;; See `ess-r-versions-create' and ess-site.el
-     ("Other"
-      ["No other R or Sqpe versions" nil nil])
-     ["About"
-      (ess-goto-info "Starting up") t]
-     ;; :help "Read about starting a new ESS process" :active t]
-     )
-    ["Switch Process"   ess-switch-process              t]
     "------"
     ("start-dev" :visible nil)
     ("end-dev" :visible nil)
+    "------"
+    ("Font Lock"
+     :active ess-font-lock-keywords
+     :filter ess-generate-font-lock-submenu)
     "------"
     ["Describe"         describe-mode                   t]
     ["About editing" (ess-goto-info "Editing")  t]
@@ -403,9 +426,6 @@ indentation style. At present, predefined style are `BSD', `GNU', `K&R', `C++',
   (kill-all-local-variables) ;; NOTICE THIS! *** NOTICE THIS! *** NOTICE THIS! ***
   (ess-setq-vars-local alist)
   ;; must happen here, since the mode map is set up too early:
-  ;;this is bass-ackwards
-  ;;  (define-key ess-mode-map "("  ;; allow to toggle after customization:
-  ;;    (if ess-r-args-electric-paren 'ess-r-args-auto-show 'self-insert-command))
   (if ess-r-args-electric-paren (define-key ess-mode-map "(" 'ess-r-args-auto-show))
   (ess-write-to-dribble-buffer
    (format "(ess-mode-1): ess-language=%s, ess-dialect=%s buf=%s \n"
@@ -578,7 +598,7 @@ it cannot find a function beginning."
 
   ;; FIXME: should not throw error in accordance with beginning-of-defun and
   ;; beginning-of-defun-function specification
-  
+
   (interactive)
   (let ((init-point (point))
         (in-set-S4 nil)
@@ -1382,7 +1402,7 @@ generate the source buffer."
      (ess-force-buffer-current "Process to dump from: ")
      (if (ess-ddeclient-p)
          (list (read-string "Object to edit: "))
-       (ess-read-object-name "Object to edit: "))))
+       (ess-read-object-name "Object to edit"))))
 
   (let* ((dirname (file-name-as-directory
                    (if (stringp ess-source-directory)

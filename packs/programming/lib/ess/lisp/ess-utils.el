@@ -126,6 +126,15 @@
 
 
 
+(defun ess--generate-eval-visibly-submenu (menu)
+  '(["yes" (lambda () (interactive) (setq ess-eval-visibly t))
+     :style radio :enable t :selected (eq ess-eval-visibly t) ]
+    ["nowait" (lambda () (interactive) (setq ess-eval-visibly 'nowait))
+     :style radio :enable t :selected (eq ess-eval-visibly 'nowait) ]
+    ["no" (lambda () (interactive) (setq ess-eval-visibly nil))
+     :style radio :enable t :selected (eq ess-eval-visibly nil) ]))
+
+
 (defun ess-quote-special-chars (string)
   (replace-regexp-in-string
    "\"" "\\\\\\&"
@@ -810,6 +819,300 @@ process to avoid excessive requests.
          (let ((out (progn ,@body)))
            (process-put *proc* ',time-var (current-time))
            out)))))
+
+;; debug util:
+(defmacro dbg (&rest args)
+  `(progn
+     ,@(mapcar (lambda (el)
+		 `(princ (format "%s:%s\n" ',el ,el)))
+	       args)))
+
+
+
+(defmacro ess--execute-singlekey-command (map &optional prompt wait exit-form &rest args)
+  "Execute single-key comands defined in MAP till a key is pressed which is not part of map.
+
+Return the value of the lastly executed command.
+
+Single-key input commands are those that once executed do not
+requre the prefix command for subsequent invocation.
+
+PROMPT is passed to `read-event'.
+
+If WAIT is t, wait for next input and ignore the keystroke which
+triggered the command.
+
+Each command in map should accept one at least one argument, the
+most recent event (as read by `read-event'). ARGS are the
+supplementary arguments passed to the commands.
+
+EXIT-FORM should be supplied for a more refined control of the
+read-even loop. The loop is exited when EXIT-FORM evaluates to
+t. See examples in the tracebug code.
+"
+  
+  `(let* ((ev last-command-event)
+          (command (lookup-key ,map (vector ev)))
+          out exit )
+     (if (not (or ,wait command))
+         (message "%s is undefined" (key-description (this-command-keys)))
+       (unless ,wait
+         (setq out (and command (funcall command ev ,@args))))
+       (while (and (not exit)
+                   (setq command
+                         (lookup-key ,map
+                                     (vector (setq ev (read-event ,prompt))))))
+         (setq out (funcall command ev ,@args))
+         (sleep-for .01)
+         (setq exit ,exit-form))
+       (unless exit ;; push only if an event triggered the exit
+         (push ev unread-command-events))
+       out)))
+
+(defmacro ess-execute-dialect-specific (command &optional prompt &rest args)
+  "Execute dialect specific command.
+
+-- If command is not defined issue warning 'Not availabe for dialect X'
+-- if a function, execute it with ARGS
+-- If a string strarting with 'http' or 'www' browse with `browse-url',
+   otherwise execute the command in inferior process.
+
+When command is a string ARGS are substituted by (format ,command ,@args).
+
+When PROMPT is non-nil ask the user for a string value and
+prepend the response to ARGS.
+
+If prompt is a string just pass it to `read-string'. If a list, pass it
+to `ess-completing-read'.
+"
+  `(if (null ,command)
+       (message "Sorry, not implemented for dialect %s" ess-dialect)
+     (let* ((com  (if (symbolp ,command)
+                     (symbol-function ,command)
+                   ,command))
+            (prompt ',prompt)
+            (resp (and prompt
+                       (if (stringp  prompt)
+                           (read-string  prompt)
+                         (apply 'ess-completing-read prompt))))
+            (args (append (list resp) ',args)))
+       (cond ((functionp com)
+              (apply com args))
+             ((and (stringp com)
+                   (string-match "^\\(http\\|www\\)" com))
+              (setq com (apply 'format com args))
+              (require 'browse-url)
+              (browse-url com))
+             ((stringp com)
+              (unless (string-match "\n$" com)
+                (setq com (concat com "\n")))
+              (setq com (apply 'format com args))
+              (ess-eval-linewise com))
+             (t
+              (error "Argument COMMAND must be either a function or a string")))))
+  )
+
+
+
+;; SJE: 2009-01-30 -- this contribution from
+;; Erik Iverson <iverson@biostat.wisc.edu>
+
+(defun ess-tooltip-show-at-point (text xo yo)
+  "Show a tooltip displaying 'text' at (around) point, xo and yo are x-
+and y-offsets for the toolbar from point."
+  (let (
+        (fx (frame-parameter nil 'left))
+        (fy (frame-parameter nil 'top))
+        (fw (frame-pixel-width))
+        (fh (frame-pixel-height))
+        frame-left frame-top my-x-offset my-y-offset)
+
+    ;; The following comment was found before code looking much like that
+    ;; of frame-left and frame-top below in the file
+    ;; tooltip-help.el. I include it here for acknowledgement, and I did observe
+    ;; the same behavior with the Emacs window maximized under Windows XP.
+
+    ;; -----original comment--------
+    ;; handles the case where (frame-parameter nil 'top) or
+    ;; (frame-parameter nil 'left) return something like (+ -4).
+    ;; This was the case where e.g. Emacs window is maximized, at
+    ;; least on Windows XP. The handling code is "shamelessly
+    ;; stolen" from cedet/speedbar/dframe.el
+    ;; (contributed by Andrey Grigoriev)
+
+    (setq frame-left (if (not (consp fx))
+                         fx
+                       (if (eq (car fx) '-)
+                           (- (x-display-pixel-width) (car (cdr fx)) fw)
+                         (car (cdr fx)))))
+
+    (setq frame-top (if (not (consp fy))
+                        fy
+                      (if (eq (car fy) '-)
+                          (- (x-display-pixel-height) (car (cdr fy)) fh)
+                        (car (cdr fy)))))
+
+    ;; calculate the offset from point, use xo and yo to adjust to preference
+    (setq my-x-offset (+ (car(window-inside-pixel-edges))
+                         (car(posn-x-y (posn-at-point)))
+                         frame-left xo))
+
+    (setq my-y-offset (+ (cadr(window-inside-pixel-edges))
+                         (cdr(posn-x-y (posn-at-point)))
+                         frame-top yo))
+
+    (let ((tooltip-frame-parameters
+           (cons (cons 'top my-y-offset)
+                 (cons (cons 'left my-x-offset)
+                       tooltip-frame-parameters))))
+      (tooltip-show text))
+    ))
+
+
+;; (defun ess-tooltip-show-at-point (text xo yo)
+;;   (with-no-warnings
+;;     (pos-tip-show text
+;;                   'popup-tip-face 
+;;                   (point)
+;;                   nil tooltip-hide-delay
+;;                   popup-tip-max-width
+;;                   nil xo yo)))
+
+
+
+      
+
+(defvar ess-build-tags-command nil
+  "Command passed to generate tags.
+
+If nil, `ess-build-tags-for-directory' uses the mode's imenu
+regexpresion. Othersiwe, it should be a string with two %s
+formats: one for directory and another for the output file.")
+
+  
+(defun ess-build-tags-for-directory (dir tagfile)
+  "Ask for directory and tag file and build tags for current dialect.
+
+If the current language defines `ess-build-tags-command' use it
+and ask the subprocess to build the tags. Otherwise use imenu
+regexp and call find .. | etags .. in a shell command. You must
+have 'find' and 'etags' programs installed.
+
+Use M-. to navigate to a tag. M-x `visit-tags-table' to
+append/replace the currently used tag table.
+
+If prefix is given, force tag generation based on imenu. Might be
+useful when different languages are also present in the
+directory (.cpp, .c etc).
+"
+  (interactive "DDirectory to tag: 
+FTags file (default TAGS): ")
+  (when (eq (length (file-name-nondirectory tagfile)) 0)
+    (setq tagfile (concat tagfile "TAGS")))
+  (if (and ess-build-tags-command (null current-prefix-arg))
+      (ess-eval-linewise (format ess-build-tags-command dir tagfile))
+    ;; else generate from imenu
+    (unless (or imenu-generic-expression ess-imenu-generic-expression) ;; need both!!
+      (error "No ess-tag-command found, and no imenu-generic-expression defined"))
+    (let* ((find-cmd
+            (format "find %s -type f -size 1M \\( -regex \".*\\.\\(cpp\\|jl\\|[RsrSch]\\(nw\\)?\\)$\" \\)" dir))
+           (regs (delq nil (mapcar (lambda (l)
+                                     (if (string-match "'" (cadr l))
+                                         nil ;; remove for time being
+                                       (format "/%s/\\%d/"
+                                               (replace-regexp-in-string "/" "\\/" (nth 1 l) t)
+                                               (nth 2 l))))
+                                   imenu-generic-expression)))
+           (tags-cmd (format "etags -o %s --regex='%s' -" tagfile
+                             (mapconcat 'identity regs "' --regex='"))))
+      (message "Building tags: %s" tagfile)
+      ;; (dbg (format "%s | %s" find-cmd tags-cmd))
+      (when (= 0 (shell-command (format "%s | %s" find-cmd tags-cmd)))
+        (message "Building tags .. ok!")))))
+      
+
+
+(defun ess-function-arguments (funname)
+  "Get FUNARGS from cache or ask the process for it.
+
+Return FUNARGS - a list with the first element being a
+cons (package_name . time_stamp_of_request), second element is a
+string giving arguments of the function as they appear in
+documentation, third element is a list of arguments of all S3
+methods as returned by utils:::functionArgs utility.
+
+If package_name is R_GlobalEnv or \"\", and time_stamp is less
+recent than the time of the last user interaction to the process,
+then update the entry.
+
+Package_name is \"\" if funname was not found or is a special name,n
+i.e. contains :,$ or @.
+"
+  (when (and funname ;; usually returned by ess--funname.start (might be nil)
+             (and ess-local-process-name (get-process ess-local-process-name)))
+    (let* ((proc (get-process ess-local-process-name))
+           (args (gethash funname (process-get proc 'funargs-cache)))
+           (pack (caar args))
+           (ts   (cdar args)))
+      (when (and args
+                 (and (time-less-p ts (process-get proc 'last-eval))
+                      (or (null pack)
+                          (equal pack "")
+                          (equal pack "R_GlobalEnv"))
+                      ))
+        ;; reset cache
+        (setq args nil))
+      (or args
+          (cadr (assoc funname (process-get proc 'funargs-pre-cache)))
+          (with-current-buffer (ess-command (format ess-funargs-command funname))
+            (goto-char (point-min))
+            (when (re-search-forward "(list" nil t)
+              (goto-char (match-beginning 0))
+              (setq args (ignore-errors (eval (read (current-buffer)))))
+              (if args
+                  (setcar args (cons (car args) (current-time)))))
+            ;; push even if nil
+            (puthash (substring-no-properties funname) args (process-get proc 'funargs-cache))
+            )))))
+
+
+(defvar ess--funname.start nil)
+
+(defun ess--funname.start (&optional look-back)
+  "If inside a function call, return (FUNNAMME . START) where
+FUNNAME is a function name found before ( and START is where
+FUNNAME starts.
+
+LOOK-BACK is a number of characters to look back; defaults to
+2000. As the search might get quite slow for files with thousands
+of lines.
+
+Also store the cons in 'ess--funname.start for potential use
+later."
+  (save-restriction
+    (let* ((proc (get-buffer-process (current-buffer)))
+           (mark (and proc (process-mark proc))))
+
+      (if (and mark (>= (point) mark))
+          (narrow-to-region mark (point)))
+
+      (and ess-noweb-mode
+           (ess-noweb-narrow-to-chunk))
+
+      (when (not (ess-inside-string-p))
+        (setq ess--funname.start
+              (condition-case nil ;; check if it is inside a functon call
+                  (save-excursion
+                    (up-list -1)
+                    (while (not (looking-at "("))
+                      (up-list -1))
+                    ;; (skip-chars-backward " \t") ;; bad R style, so not providding help
+                    (let ((funname (symbol-name (symbol-at-point))))
+                      (when (and funname
+                                 (not (member funname ess-S-non-functions)))
+                        (cons funname (- (point) (length funname))))
+                      ))
+                (error nil)))))))
 
 
 (provide 'ess-utils)

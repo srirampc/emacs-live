@@ -108,12 +108,10 @@
     (require 'font-lock))
 
 (require 'ess-compat)
+(require 'ess-custom)
+(require 'ess-mode)
+(require 'ess-inf)
 
-(eval-and-compile 
-  (require 'ess-custom)
-  (require 'ess-mode)
-  (require 'ess-inf)
-  )
 
  ; ess-mode: editing S/R/XLS/SAS source
 
@@ -294,7 +292,7 @@ See also `ess-use-ido'.
 
     ;; eldoc)
     (require 'eldoc)
-    (when (and isR
+    (when (and ess-funargs-command ;; if mode provide this, it suports eldoc
                (or (and (not inferior) ess-use-eldoc)
                    (and inferior (eq ess-use-eldoc t))))
       (when (> eldoc-idle-delay 0.4) ;; default is too slow for paren help
@@ -376,16 +374,26 @@ Otherwise try a list of fixed known viewers."
 (defun ess-get-pdf-viewer ()
   "Get external PDF viewer to be used from ESS.
 Use `ess-pdf-viewer-pref' when that is executably found by \\[executable-find].
-Otherwise try a list of fixed known viewers."
-  (file-name-nondirectory
-   (or (and ess-pdf-viewer-pref         ; -> ./ess-custom.el
-            (executable-find ess-pdf-viewer-pref))
-       (car (ess-get-words-from-vector
-             "getOption(\"pdfviewer\")\n"))
-       (executable-find "evince")
-       (executable-find "kpdf")
-       (executable-find "xpdf")
-       (executable-find "acroread"))))
+Otherwise try a list of fixed known viewers.
+"
+  (let ((viewer (or ess-pdf-viewer-pref
+                    ;; (and (stringp ess-pdf-viewer-pref)         ; -> ./ess-custom.el
+                    ;;      (executable-find ess-pdf-viewer-pref))
+                    (executable-find "evince")
+                    (executable-find "kpdf")
+                    (executable-find "okular")
+                    (executable-find "xpdf")
+                    (executable-find "acroread")
+                    (executable-find "xdg-open")
+                    ;; this one is wrongly wrong, (ok for time being as it is use donly in swv)
+                    (car (ess-get-words-from-vector
+                          "getOption(\"pdfviewer\")\n"))
+                    )))
+    (when (stringp viewer)
+      (setq viewer (file-name-nondirectory viewer)))
+    viewer))
+
+        
 
 
 
@@ -422,12 +430,23 @@ Otherwise try a list of fixed known viewers."
   "Write TEXT to dribble buffer ('*ESS*') only *if* `ess-verbose'."
   (if ess-verbose (ess-write-to-dribble-buffer text)))
 
+
+(defvar ess--make-local-vars-permenent nil
+  "If this varialbe is non-nil in a buffer make all variable permannet.
+Used in noweb modes.")
+(make-variable-buffer-local 'ess--make-local-vars-permenent)
+(put 'ess--make-local-vars-permenent 'permanent-local t)
+
 (defun ess-setq-vars-local (alist &optional buf)
   "Set language variables from ALIST, in buffer BUF, if desired."
   (if buf (set-buffer buf))
+  ;; (setq alist (reverse alist)) ;; It should really be in reverse order; 
   (mapc (lambda (pair)
           (make-local-variable (car pair))
-          (set (car pair) (eval (cdr pair))))
+          (set (car pair) (eval (cdr pair)))
+          (when ess--make-local-vars-permenent
+            (put (car pair) 'permanent-local t)) ;; hack for Rnw
+          )
         alist)
   (ess-write-to-dribble-buffer
    (format "(ess-setq-vars-LOCAL): language=%s, dialect=%s, buf=%s, comint..echoes=%s, comint..sender=%s\n"

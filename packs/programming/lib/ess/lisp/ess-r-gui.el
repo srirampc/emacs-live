@@ -62,7 +62,7 @@ nil on Unix machines."
 (if (not (getenv "R_HOME")) (setenv "R_HOME" "c:/progra~1/R/R-2.6.1"))
 ;;                                                         ^^^^^^^^^ FIXME! do something better
 (defvar inferior-Rgui-program-name "cmd" "Rgui program name")
-(defvar Rgui-pager "gnuclientw.exe" "Rgui pager program")
+(defvar Rgui-pager "emacsclientw.exe" "Rgui pager program")
 (defvar ess-command-file "c:/temp/ess-tempfile.R"
   "file name for communication with Rgui")
 (defvar inferior-ess-execdde
@@ -125,7 +125,6 @@ nil on Unix machines."
      (ess-cmd-delay . ess-R-cmd-delay)
      (ess-function-pattern              . ess-R-function-pattern)
      (ess-object-name-db-file . "ess-r-namedb.el" )
-     (ess-imenu-mode-function . 'ess-imenu-R)
      (inferior-ess-program . inferior-Rgui-program-name)
      (inferior-ess-objects-command . inferior-R-objects-command)
      (inferior-ess-font-lock-keywords   . 'inferior-R-font-lock-keywords)

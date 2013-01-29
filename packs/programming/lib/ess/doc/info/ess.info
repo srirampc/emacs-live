@@ -14,7 +14,7 @@ File: ess.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
 ESS: Emacs Speaks Statistics
 ****************************
 
-ESS version 12.09
+ESS version 12.09-2
 
      by  A.J. Rossini,
          R.M. Heiberger,
@@ -42,7 +42,6 @@ ESS version 12.09
 * Introduction::                Overview of features provided by this package
 * Installation::                Installing ESS on your system
 
-* ESS for S::                   Overview of ESS features for the S family
 * Interactive ESS::             Interacting with statistical programs
 * Entering commands::           Interacting with the ESS process
 * Evaluating code::             Sending code to the ESS process
@@ -53,10 +52,10 @@ ESS version 12.09
 * Developing with ESS::         Tools for package development and debugging
 * Extras::                      Other ESS features for the S family
 
+* ESS for S::                   Overview of ESS features for the S family
 * ESS for SAS::
 * ESS for BUGS::
 * ESS for JAGS::
-
 * Mailing lists/bug reports::   How to get assistance with ESS
 * Customization::               Customizing ESS
 * Key Index::
@@ -139,8 +138,79 @@ those things for each package.  ESS is a package which is designed to
 make editing and interacting with statistical packages more uniform,
 user-friendly and give you the power of emacs as well.
 
-   ESS provides several features which make it easier to interact with
-the ESS process (a connection between your buffer and the statistical
+* Menu:
+
+* Current Features::
+
+
+File: ess.info,  Node: Current Features,  Prev: Features,  Up: Features
+
+1.1.1 Features Overview
+-----------------------
+
+   * Languages Supported:
+        * S family (i.e., R and S+ (aka S-PLUS), nowadays)
+
+        * SAS
+
+        * OpenBUGS/JAGS
+
+        * Stata
+
+        * XLispStat including Arc and ViSta
+
+        * Julia
+
+   * Editing source code (S family, SAS, OpenBUGS/JAGS, Stata, Julia)
+        * Syntactic indentation and highlighting of source code
+
+        * Partial evaluation of code
+
+        * Loading and error-checking of code
+
+        * Source code revision maintenance
+
+        * Batch execution (SAS, OpenBUGS/JAGS)
+
+        * Use of imenu to provide links to appropriate functions
+
+   * Interacting with the process (S family, SAS, Stata, Julia)
+        * Command-line editing
+
+        * Searchable Command history
+
+        * Command-line completion of S family object names and file
+          names
+
+        * Quick access to object lists and search lists
+
+        * Transcript recording
+
+        * Interface to the help system
+
+   * Transcript manipulation (S family, Stata)
+        * Recording and saving transcript files
+
+        * Manipulating and editing saved transcripts
+
+        * Re-evaluating commands from transcript files
+
+   * Interaction with Help Pages and other Documenation (R)
+        * Fast Navigation
+
+        * Sending Examples to running ESS process.
+
+        * Fast Transfer to Further Help Pages
+
+   * Help File Editing (R)
+        * Syntactic indentation and highlighting of source code.
+
+        * Sending Examples to running ESS process.
+
+        * Previewing
+
+ESS provides several features which make it easier to interact with the
+ESS process (a connection between your buffer and the statistical
 package which is waiting for you to input commands).  These include:
 
    * Command-line editing for fixing mistakes in commands before they
@@ -207,6 +277,180 @@ File: ess.info,  Node: New features,  Next: Credits,  Prev: Features,  Up: Intro
 
 1.2 New features in ESS
 =======================
+
+     Changes/Bug Fixes in 12.09-2:
+        * ESS: new `ess-switch-to-end-of-proc-buffer' variable that
+          controls  whether `C-c C-z' switches to the end of process
+          buffer. The  default is `t'. You can use prefix argument to
+          `C-c C-z' to  toggle this variable.
+
+        * ESS: fix in `ess-eval-linewise' that was causing emacs to
+          hang during R debugging with `ess-eval-visibly' equal to `t'.
+
+        * ESS: fix in `ess-eval-linewise' that was causing emacs to
+          recenter the prompt in visible window
+
+        * ESS[tracebug]: A better handling of "Selection" prompts and
+          debug related singlekey commands.
+
+        * ESS: fix a bug in `ess-switch-process' that was causing
+          `*new*' selection to fail.
+
+        * ESS[R]: Solve missing `ess-local-process-name' bug in R-dired.
+
+        * ESS[SWV]: `ess-swv-PDF' doesn't ask for a command to run if
+          there is only one command in `ess-swv-pdflatex-commands'.
+
+        * ESS[SWV]: `ess-swv-weave' gained an universal argument to
+          allow for an interactive choice between available weavers
+          (sweave, knitr).
+
+        * ESS: `ess-eval-*-and-step' functions go to next empty line at
+          eob, instead of staying at the last line.
+
+     Changes/New Features in 12.09-1:
+        * ESS _Breaking Changes in Keys_:
+
+             - New keymaps: `ess-doc-map' bound to `C-c C-d';
+               `ess-extra-map' bound to `C-c C-e';
+               `ess-dump-object-into-edit-buffer' was moved on `C-c C-e
+               C-d'
+
+             - roxygen map was moved on `C-c C-o' and
+               `ess-roxy-update-entry' now resides on `C-c C-o C-o'
+
+             - ess-handy-commands is not bound anymore
+
+             - `ess-dev-map' (including `ess-tracebug' and
+               `ess-developer') moved on `C-c C-t'
+
+             - `C-c C-y' is deprecated in favor of `C-c C-z C-z'
+
+        * ESS[R] new command `ess-describe-object-at-point' bound to
+          `C-c C-d C-e' (repeat `C-e' or `e' to cycle). It was inspired
+          by Erik Iverson's `ess-R-object-tooltip'. Customize
+          `ess-describe-at-point-method' to use tooltip instead of an
+          electric buffer.
+
+        * ESS: New command `ess-build-tags-for-directory' bound to `C-c
+          C-e C-t' for building dialect specific tag tables. After
+          building tags use `M-.' to navigate to function and objects
+          definitions. By default `C-c C-e C-t' builds tags based on
+          imenu regular expressions and also include other common
+          languages `.c, .o, .cpp' etc. But it relies on external `find'
+          and `etags' commands. If `ess-build-tags-command' is defined
+          (for `R'), the inferior process is asked to build tags
+          instead.
+
+        * ESS: `ess-switch-process' offers `*new*' alternative to start
+          a new process instead of switching to one of the currently
+          running processes.
+
+        * ESS: Switching between processes (`C-c C-s') uses buffer
+          names instead of the internal process names. Use `M-x
+          rename-buffer' command to conveniently rename your process
+          buffers.
+
+        * ESS: Process buffers can be automatically named on process
+          creation according to user specified scheme. Default schemes
+          are *proc*, *proc:dir* and *proc:abbr-long-dir* where `proc'
+          stands for the internal process name and `dir' stands for the
+          directory where the process was started in. The default is
+          *proc*. For customization see
+          `ess-gen-proc-buffer-name-function'.
+
+        * ESS: `ess-eval-visibly-p' is deprecated in favor of
+          `ess-eval-visibly'.
+
+        * ESS: New evaluation pattern `nowait'.  In addition to old
+          `nil' and `t' values, `ess-eval-visibly' accepts `nowait' for
+          a visible evaluation with no waiting for the process. See
+          `ess-eval-visibly' for details on evaluation patterns.
+
+        * ESS: New "Process" menu entry with process related commands
+          and configuration
+
+        * iESS: Process buffer is now automatically shown on errors
+
+        * ESS: New `ess-switch-to-inferior-or-script-buffer' command
+          bound to `C-c C-z' in both script and process buffers. If
+          invoked form process buffer it switches to the most recent
+          buffer of the same dialect. It is a single key command.
+
+        * ESSR-help:  On multiple help pages with the same name, `C-c
+          C-v' now asks for user resolution directly in emacs.
+
+        * ESS[R] ess-roxy: new variable `ess-roxy-re' for fontification
+          of cases where the number of leading `#' differs from
+          `ess-roxy-str'.
+
+        * ESS[R] Eldoc was considerably enhanced.  It now finds hidden
+          default S3 methods and displays non-default methods'
+          arguments after trailing ||.
+
+        * ESS[R]: New `ess-display-demos' command bound to `C-c C-d o'
+          and `C-c C-d C-o'
+
+        * ESS: New `ess-help-web-search' command bound to `C-c C-d w'
+          and `C-c C-d C-w' to facilitate interactive search of web
+          resources. Implemented for `R', `Stata' and `Julia'. See also
+          `ess-help-web-search-command'.
+
+        * ESS: ess-pdf-viewer-pref accepts now command line arguments
+
+        * ESS[Rnw]: Add knitr support.  Customize `ess-swv-processor'
+          for the default processor.
+
+        * ESS[Rnw]: More thorough renaming of remaining `noweb-*' to
+          `ess-noweb-*'.
+
+        * ESS[Rnw] new commands `ess-eval-chunk-and-step' and
+          `ess-eval-chunk' bound to `M-n C-c' and `M-n C-M-x' to mirror
+          standard ess commands in C-c map.
+
+        * ESS[R] Auto-completion: new variable
+          `ess-ac-R-argument-suffix' to customize the insertion of
+          trailing "=". Defaults to " = ".
+
+        * ESS[Julia]: Added index, apropos and web-search to julia.
+
+        * ESS help: More evaluation commands were added to ess-help
+          mode (`C-c C-c', `C-M-x' etc)
+
+     Bug Fixes in 12.09-1:
+        * iESShelp: Multiple help pages with the same name are properly
+          handled on `C-c C-v'
+
+        * iESSremote: Evaluation with ESS remote no longer freezes
+          emacs.
+
+        * iESS: `comint-previous-prompt' `C-c C-p' no longer stops on
+          secondary prompt "+".
+
+        * iESS[R], iESS(Sqpe) [S] on Windows: The `options("editor")'
+          is now initialized to `emacsclient' instead of the previous
+          `gnuclient'.  The user may need to add the line
+          `(server-start)' to the emacs initialization file.
+          `emacsclient' has been included with emacs since GNU Emacs
+          22.1.
+
+        * ESS[Rnw] Fixed "connection to R" bug (in 12.09 only).
+
+        * ESS[Rnw] Explicit `ess-swv-stangle' and `ess-swv-sweave'
+          functions.
+
+        * ESS[Rnw] Fixed completion and smart underscore problems cause
+          by unmatched "\"'
+
+        * ESS[R] is more careful with the `R' code injection.  It now
+          happens only once at the start of the session.
+
+        * ESS[R]: Fixed auto-scrolling the comint buffer on evaluation.
+
+        * ESS[Julia]: Solve several indentation and word navigation
+          problems.
+
+        * ESS[Julia]: Help system works again.
 
      Changes/New Features in 12.09:
 
@@ -516,7 +760,7 @@ File: ess.info,  Node: New features,  Next: Credits,  Prev: Features,  Up: Intro
                `nil', never inject.
 
                During the source injection the value of
-               `ess-eval-visibly-p' is ignored.
+               `ess-eval-visibly' is ignored.
 
              - Org-mode support: Visual debugger is now aware of the
                temporary org source editing buffer (`C-c '') and jumps
@@ -1820,7 +2064,7 @@ change to customize ESS to your taste, but it is recommended that you
 defer this section until you are more familiar with ESS.
 
 
-File: ess.info,  Node: Installation,  Next: ESS for S,  Prev: Introduction,  Up: Top
+File: ess.info,  Node: Installation,  Next: Interactive ESS,  Prev: Introduction,  Up: Top
 
 2 Installing ESS on your system
 *******************************
@@ -1830,21 +2074,23 @@ on your system.
 
 * Menu:
 
-* Unix installation::              Installing ESS on your Unix system
-* Microsoft Windows installation:: Installing ESS on your MS Windows system
-* Requirements::         emacs, Operating Systems and Statistical Packages
+* Unix installation::           Installing ESS on your Unix (Linux, MacOS, ...) system
+* Microsoft Windows installation::  Installing ESS on your MS Windows system
+* License::
+* Stability::
+* Requirements::                Emacs, Operating Systems and Statistical Packages
 
 
-File: ess.info,  Node: Unix installation,  Next: Microsoft Windows installation,  Up: Installation
+File: ess.info,  Node: Unix installation,  Next: Microsoft Windows installation,  Prev: Installation,  Up: Installation
 
-2.1 Unix installation
-=====================
+2.1 Unix (Linux / MacOS / Solaris / ...) Installation
+=====================================================
 
 For a Unix or Unix-like installation, please follow the next steps.
 Retrieve the latest tgz file (`ess-VERSION.tgz') from ESS downloads
 area (http://ess.r-project.org/index.php?Section=download).
 
-   _GNU Emacs Simple Instructions:_ for recent versions of Emacs (22.x
+   _GNU Emacs Simple Instructions:_ for recent versions of Emacs (23.x
 or higher) and ESS, the installation process is simple.
 
   1. Extract all the files from `ess-VERSION.tgz' into the directory
@@ -1937,7 +2183,7 @@ or higher) and ESS, the installation process is simple.
 
 
 
-File: ess.info,  Node: Microsoft Windows installation,  Next: Requirements,  Prev: Unix installation,  Up: Installation
+File: ess.info,  Node: Microsoft Windows installation,  Next: License,  Prev: Unix installation,  Up: Installation
 
 2.2 Microsoft Windows installation
 ==================================
@@ -1946,7 +2192,7 @@ For Microsoft Windows installation, please follow the next steps.
 Retrieve the latest zip file (`ess-VERSION.zip') from ESS downloads
 area (http://ess.r-project.org/index.php?Section=download).
 
-   _GNU Emacs Simple Instructions:_ for recent versions of Emacs (22.x
+   _GNU Emacs Simple Instructions:_ for recent versions of Emacs (23.x
 or higher) and ESS, the installation process is simple.
 
   1. Extract all the files from `ess-VERSION.zip' (by double clicking
@@ -1955,7 +2201,7 @@ or higher) and ESS, the installation process is simple.
      directory that exists for packages like ESS.  If GNU Emacs was
      installed in the default location, then this directory can be
      found somewhere like `C:\Program Files\GNU
-     Emacs\emacs-22.x\site-lisp'
+     Emacs\emacs-24.x\site-lisp'
 
   2. Add the line
           (require 'ess-site)
@@ -2058,9 +2304,9 @@ sure to use backslashes `\' since Windows requires them.
    An alternative, for R users, is that rather than adjusting the PATH
 variable, you can add the following to your emacs initialization file
 (and restart emacs):
-     (setq inferior-R-program-name "c:/progra~1/R/R-2.2.1/bin/Rterm.exe")
-   This assumes that you have installed R-2.2.1 in the default location.
-Change the path otherwise to point to other locations.
+     (setq inferior-R-program-name "c:/progra~1/R/R-2.15.1/bin/Rterm.exe")
+   This assumes that you have installed R-2.15.1 in the default
+location.  Change the path otherwise to point to other locations.
 
    Windows users who place S-PLUS anywhere other than the default
 location will also need to add the following three lines (properly
@@ -2140,393 +2386,58 @@ emacs, and cut and paste the results into the XLispStat *Listener*
 Window under Microsoft Windows.
 
 
-File: ess.info,  Node: Requirements,  Prev: Microsoft Windows installation,  Up: Installation
+File: ess.info,  Node: License,  Next: Stability,  Prev: Microsoft Windows installation,  Up: Installation
 
-2.3 Requirements
+2.3 License
+===========
+
+The source and documentation of ESS is free software.  You can
+redistribute it and/or modify it under the terms of the GNU General
+Public License as published by the Free Software Foundation; either
+version 2, or (at your option) any later version.
+
+   ESS is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+in the file COPYING in the same directory as this file for more details.
+
+
+File: ess.info,  Node: Stability,  Next: Requirements,  Prev: License,  Up: Installation
+
+2.4 Stability
+=============
+
+All recent released versions are meant to be release-quality versions.
+While some new features are being introduced, we are cleaning up and
+improving the interface.  We know that there are many remaining
+opportunities for documentation improvements, but all contributors are
+volunteers and time is precious. Patches or suggested fixes with bug
+reports are much appreciated!
+
+
+File: ess.info,  Node: Requirements,  Prev: Stability,  Up: Installation
+
+2.5 Requirements
 ================
 
 ESS is most likely to work with current/recent versions of the following
 statistical packages: R/S-PLUS, SAS, Stata, OpenBUGS and JAGS.
 
    ESS supports current, and recent, stable versions of GNU Emacs
-(specifically, the 22.x and 23.x series; alpha/beta/pre-release versions
-are NOT SUPPORTED).  XEmacs currently does not allow all ESS features.
-Basic ESS functionality however is supported for the time being (XEmacs
-stable 21.4.14 or higher).
+(currently, specifically, the 23.x and 24.x series;
+alpha/beta/pre-release versions are NOT SUPPORTED).  Due to XEmacs
+lacking some features that ESS requires, ESS support of XEmacs ends
+with ESS 12.04-4.  This decision will be re-visited in the future as
+XEmacs continues to sync with GNU Emacs.
 
    To build the PDF documentation, you will need a version of TeX Live
 or texinfo that includes texi2dvi (BEWARE: recent TeX Live, and some
 texinfo RPMs, do NOT include texi2dvi).
 
 
-File: ess.info,  Node: ESS for S,  Next: Interactive ESS,  Prev: Installation,  Up: Top
+File: ess.info,  Node: Interactive ESS,  Next: Entering commands,  Prev: Installation,  Up: Top
 
-3 Overview of ESS features for the S family
-*******************************************
-
-* Menu:
-
-* ESS(S)--Editing files::
-* iESS(S)--Inferior ESS processes::
-* ESS-help--assistance with viewing help::
-* Philosophies for using ESS(S)::
-* Scenarios for use (possibilities--based on actual usage)::
-* Customization Examples and Solutions to Problems::
-
-
-File: ess.info,  Node: ESS(S)--Editing files,  Next: iESS(S)--Inferior ESS processes,  Prev: ESS for S,  Up: ESS for S
-
-3.1 ESS[S]-Editing files
-========================
-
-ESS[S] is the mode for editing S language files.  This mode handles:
-
-   -  proper indenting, generated by both [Tab] and [Return].
-
-   -  color and font choices based on syntax.
-
-   -  ability to send the contents of an entire buffer, a highlighted
-     region, an S function, or a single line to an inferior S process,
-     if   one is currently running.
-
-   -  ability to switch between processes which would be the target of
-     the   buffer (for the above).
-
-   -  The ability to request help from an S process for variables and
-     functions, and to have the results sent into a separate buffer.
-
-   -  completion of object names and file names.
-
-   ESS[S] mode should be automatically turned on when loading a file
-with the suffices found in ess-site (*.R, *.S, *.s, etc).
-Alternatively, type `M-x R-mode' to put the current buffer into R mode.
-However, one will have to start up an inferior process to take
-advantage of the interactive features.
-
-
-File: ess.info,  Node: iESS(S)--Inferior ESS processes,  Next: ESS-help--assistance with viewing help,  Prev: ESS(S)--Editing files,  Up: ESS for S
-
-3.2 iESS[S]-Inferior ESS processes
-==================================
-
-iESS (inferior ESS) is the mode for interfacing with active statistical
-processes (programs).  This mode handles:
-
-   -  proper indenting, generated by both [Tab] and [Return].
-
-   -  color and font highlighting based on syntax.
-
-   -  ability to resubmit the contents of a multi-line command  to the
-     executing process with a single keystroke [RET].
-
-   -  The ability to request help from the current process for variables
-     and functions, and to have the results sent into a separate buffer.
-
-   -  completion of object names and file names.
-
-   -  interactive history mechanism.
-
-   -  transcript recording and editing.
-
-   To start up iESS mode, use:
-        M-x S+3
-        M-x S4
-        M-x S+5
-        M-x S+6
-        M-x R
-
-   (for S-PLUS 3.x, S4, S+5, S+6 or S+7, and R, respectively.  This
-assumes that you have access to each).  Usually the site will have
-defined one of these programs (by default S+6) to the simpler name:
-
-   M-x S
-
-   In the (rare) case that you wish to pass command line arguments to
-the starting S+6 process, set the variable `inferior-Splus-args'.
-
-   Note that R has some extremely useful command line arguments.  For
-example, `--vanilla' will ensure R starts up without loading in any init
-files.  To enter a command line argument, call R using a "prefix
-argument", by
-
-   C-u M-x R
-
-   and when ESS prompts for "Starting Args ? ", enter (for example):
-
-   `--vanilla'
-
-   Then that R process will be started up using `R --vanilla'.  If you
-wish to always call R with certain arguments, set the variable
-`inferior-R-args' accordingly.
-
-   If you have other versions of R or S-Plus available on the system,
-ESS is also able to start those versions.  How this exactly works
-depend on which OS you are using, as described in the following
-paragraphs.  The general principle, regardless of OS, is that ESS
-searches the paths listed in the variable `exec-path' for R binaries.
-If ESS cannot find your R binaries, on Unix you can change the unix
-environment variable `PATH', as this variable is used to set
-`exec-path'.
-
-   R on Unix systems: If you have "R-1.8.1" on your `exec-path', it can
-be started using `M-x R-1.8.1'.  By default, ESS will find versions of
-R beginning "R-1" or "R-2".  If your versions of R are called other
-names, consider renaming them with a symbolic link or change the
-variable `ess-r-versions'.  To see which functions have been created
-for starting different versions of R, type `M-x R-' and then hit [Tab].
-These other versions of R can also be started from the "ESS->Start
-Process->Other" menu.
-
-   R on Windows systems: If you have "rw1081" on your `exec-path', it
-can be started using `M-x rw1081'.  By default, ESS will find versions
-of R located in directories parallel to the version of R in your
-`PATH'.  If your versions of R are called other names, you will need to
-change the variable `ess-rterm-versions'.  To see which functions have
-been created for starting different versions of R, type `M-x rw' and
-then hit [Tab].  These other versions of R can also be started from the
-"ESS->Start Process->Other" menu.
-
-   Once ESS has found these extra versions of R, it will then create a
-new function, called `M-x R-newest', which will call the newest version
-of R that it found.  (ESS examines the date in the first line of
-information from `R --version' to determine which is newest.)
-
-   S on Unix systems: If you have "Splus7" on your `exec-path', it can
-be started using `M-x Splus7'.  By default, ESS will find all
-executables beginning "Splus" on your path.  If your versions of S are
-called other names, consider renaming them with a symbolic link or
-change the variable `ess-s-versions'.  To see which functions have been
-created for starting different versions of Splus, type `M-x Splus' and
-then hit [Tab].  These other versions of Splus can also be started from
-the "ESS->Start Process->Other" menu.
-
-   A second mechanim is also available for running other versions of
-Splus.  The variable `ess-s-versions-list' is a list of lists; each
-sublist should be of the form: (DEFUN-NAME PATH ARGS).  DEFUN-NAME is
-the name of the new emacs function you wish to create to start the new
-S process; PATH is the full path to the version of S you want to run;
-ARGS is an optional string of command-line arguments to pass to the S
-process.  Here is an example setting:
-     (setq ess-s-versions-list
-           '( ("Splus64" "/usr/local/bin/Splus64")
-              ("Splus64-j" "/usr/local/bin/Splus64" "-j")))
-   which will then allow you to do `M-x Splus64-j' to start  Splus64
-with the corresponding command line arguments.
-
-   If you change the value of either `ess-s-versions' or
-`ess-s-versions-list', you should put them in your .emacs before
-ess-site is loaded, since the new emacs functions are created when ESS
-is loaded.
-
-   Sqpe (S-Plus running inside an emacs buffer) on Windows systems: If
-you have an older version of S-Plus (S-Plus 6.1 for example) on your
-system, ir can be started inside an emacs buffer with `M-x splus61'.  By
-default, ESS will find versions of S-Plus located in the installation
-directories that Insightful uses by default.  If your versions of S-Plus
-are anywhere else, you will need to change the variable
-`ess-SHOME-versions'.  To see which functions have been created for
-starting different versions of S-Plus, type `M-x spl' and then hit
-[Tab].  These other versions of S-Plus can also be started from the
-"ESS->Start Process->Other" menu.
-
-
-File: ess.info,  Node: ESS-help--assistance with viewing help,  Next: Philosophies for using ESS(S),  Prev: iESS(S)--Inferior ESS processes,  Up: ESS for S
-
-3.3 ESS-help-assistance with viewing help
-=========================================
-
-ESS has built-in facilities for viewing help files from S.  *Note
-Help::.
-
-
-File: ess.info,  Node: Philosophies for using ESS(S),  Next: Scenarios for use (possibilities--based on actual usage),  Prev: ESS-help--assistance with viewing help,  Up: ESS for S
-
-3.4 Philosophies for using ESS[S]
-=================================
-
-The first is preferred, and configured for.  The second one can be
-retrieved again, by changing emacs variables.
-
-   1: (preferred by the current group of developers):  The source code
-is    real.  The objects are realizations of the source code.  Source
-for EVERY user modified object is placed in a particular directory
-or directories, for later editing and retrieval.
-
-   2: (older version): S objects are real.  Source code is a temporary
- realization of the objects.  Dumped buffers should not be saved.
-_We_strongly_discourage_this_approach_.  However, if you insist,    add
-the following lines to your .emacs file:
-     (setq ess-keep-dump-files 'nil)
-     (setq ess-delete-dump-files t)
-     (setq ess-mode-silently-save nil)
-   The second saves a small amount of disk space.  The first allows for
-better portability as well as external version control for code.
-
-
-File: ess.info,  Node: Scenarios for use (possibilities--based on actual usage),  Next: Customization Examples and Solutions to Problems,  Prev: Philosophies for using ESS(S),  Up: ESS for S
-
-3.5 Scenarios for use (possibilities-based on actual usage)
-===========================================================
-
-We present some basic suggestions for using ESS to interact with S.
-These are just a subset of approaches, many better approaches are
-possible.  Contributions of examples of how you work with ESS are
-appreciated (especially since it helps us determine priorities on
-future enhancements)! (comments as to what should be happening are
-prefixed by "##").
-     1:  ##    Data Analysis Example (source code is real)
-         ## Load the file you want to work with
-         C-x C-f myfile.s
-
-         ## Edit as appropriate, and then start up S-PLUS 3.x
-         M-x S+3
-
-         ## A new buffer *S+3:1* will appear.  Splus will have been started
-         ## in this buffer.  The buffer is in iESS [S+3:1] mode.
-
-         ## Split the screen and go back to the file editing buffer.
-         C-x 2 C-x b myfile.s
-
-         ## Send regions, lines, or the entire file contents to S-PLUS.  For regions,
-         ## highlight a region with keystrokes or mouse and then send with:
-         C-c C-r
-
-         ## Re-edit myfile.s as necessary to correct any difficulties.  Add
-         ## new commands here.  Send them to S by region with C-c C-r, or
-         ## one line at a time with C-c C-n.
-
-         ## Save the revised myfile.s with C-x C-s.
-
-         ## Save the entire *S+3:1* interaction buffer with C-c C-s.  You
-         ## will be prompted for a file name.  The recommended name is
-         ## myfile.St.  With the *.St suffix, the file will come up in ESS
-         ## Transcript mode the next time it is accessed from Emacs.
-
-
-
-     2:  ## Program revision example (source code is real)
-
-         ## Start up S-PLUS 3.x in a process buffer (this will be *S+3:1*)
-         M-x S+3
-
-         ## Load the file you want to work with
-         C-x C-f myfile.s
-
-         ## edit program, functions, and code in myfile.s, and send revised
-         ## functions to S when ready with
-         C-c C-f
-         ## or highlighted regions with
-         C-c C-r
-         ## or individual lines with
-         C-c C-n
-         ## or load the entire buffer with
-         C-c C-l
-
-         ## save the revised myfile.s when you have finished
-         C-c C-s
-
-
-
-     3:  ## Program revision example (S object is real)
-
-         ## Start up S-PLUS 3.x in a process buffer (this will be *S+3:1*)
-         M-x S+3
-
-         ## Dump an existing S object my.function into a buffer to work with
-         C-c C-d my.function
-         ## a new buffer named yourloginname.my.function.S will be created with
-         ## an editable copy of the object.  The buffer is associated with the
-         ## pathname /tmp/yourloginname.my.function.S and will amlost certainly not
-         ## exist after you log off.
-
-         ## enter program, functions, and code into work buffer, and send
-         ## entire contents to S-PLUS when ready
-         C-c C-b
-
-         ## Go to *S+3:1* buffer, which is the process buffer, and examine
-         ## the results.
-         C-c C-y
-         ## The sequence C-c C-y is a shortcut for:  C-x b *S+3:1*
-
-         ## Return to the work buffer (may/may not be prefixed)
-         C-x C-b yourloginname.my.function.S
-         ## Fix the function that didn't work, and resubmit by placing the
-         ## cursor somewhere in the function and
-         C-c C-f
-         ## Or you could've selected a region (using the mouse, or keyboard
-         ## via setting point/mark) and
-         C-c C-r
-         ## Or you could step through, line by line, using
-         C-c C-n
-         ## Or just send a single line (without moving to the next) using
-         C-c C-j
-         ## To fix that error in syntax for the "rchisq" command, get help
-         ## by
-         C-c C-v rchisq
-
-
-     4:    Data Analysis (S object is real)
-         ## Start up S-PLUS 3.x, in a process buffer (this will be *S+3:1*)
-         M-x S+3
-
-         ## Work in the process buffer.  When you find an object that needs
-         ## to be changed (this could be a data frame, or a variable, or a
-         ## function), dump it to a buffer:
-         C-c C-d my.cool.function
-
-         ## Edit the function as appropriate, and dump back in to the
-         ## process buffer
-         C-c C-b
-
-         ## Return to the S-PLUS process buffer
-         C-c C-y
-         ## Continue working.
-
-         ## When you need help, use
-         C-c C-v rchisq
-         ## instead of entering:   help("rchisq")
-
-
-File: ess.info,  Node: Customization Examples and Solutions to Problems,  Prev: Scenarios for use (possibilities--based on actual usage),  Up: ESS for S
-
-3.6 Customization Examples and Solutions to Problems
-====================================================
-
-1. Suppose that you are primarily an SPLUS 3.4 user, occasionally
-using S version 4, and sick and tired of the buffer-name *S+3*    we've
-stuck you with.  Simply edit the "ess-dialect" alist entry in    the
-ess-sp3-d.el and ess-s4-d.el files to be "S" instead of "S4" and
-"S+3".  This will ensure that all the inferior process buffer names
-are "*S*".
-
-   2. Suppose that you WANT to have the first buffer name indexed by
-":1", in the same manner as your S-PLUS processes 2,3,4, and 5 (for
-you heavy simulation people).  Then    add after your (require
-'ess-site) or (load "ess-site") command     in your .emacs file, the
-line:
-     (setq ess-plain-first-buffername nil)
-
-   3. Fontlocking sometimes fails to behave nicely upon errors.  When
-Splus dumps, a mis-matched "  (double-quote) can result in the    wrong
-font-lock face being used for the remainder of the buffer.
-
-   Solution: add a " at the end of the "Dumped..." statement, to
-revert the font-lock face back to normal.
-
-   4. When you change directory within a *R* or *S* session using the
-setwd() command, emacs does not recognise that you have changed the
-current directory.
-
-   Solution: Use `M-x ess-change-directory'.  This will prompt you for
-the directory to change to.  It will then change directory within the
-*S* buffer, and also update the emacs variable `default-directory'.
-Alternatively, if you have already executed setwd(), press `M-RET'
-within the *S* buffer so that Emacs can update `default-directory'.
-
-
-File: ess.info,  Node: Interactive ESS,  Next: Entering commands,  Prev: ESS for S,  Up: Top
-
-4 Interacting with statistical programs
+3 Interacting with statistical programs
 ***************************************
 
 As well as using ESS to edit your source files for statistical programs,
@@ -2549,7 +2460,7 @@ with statistical programs.
 
 File: ess.info,  Node: Starting up,  Next: Multiple ESS processes,  Prev: Interactive ESS,  Up: Interactive ESS
 
-4.1 Starting an ESS process
+3.1 Starting an ESS process
 ===========================
 
 To start an S session on Unix or on Windows when you use the Cygwin
@@ -2571,7 +2482,7 @@ commands.
 
 File: ess.info,  Node: Multiple ESS processes,  Next: ESS processes on Remote Computers,  Prev: Starting up,  Up: Interactive ESS
 
-4.2 Running more than one ESS process
+3.2 Running more than one ESS process
 =====================================
 
 ESS allows you to run more than one ESS process simultaneously in the
@@ -2591,7 +2502,7 @@ processes.  This is a good command to consider binding to a global key.
 
 File: ess.info,  Node: ESS processes on Remote Computers,  Next: S+elsewhere and ESS-elsewhere,  Prev: Multiple ESS processes,  Up: Interactive ESS
 
-4.3 ESS processes on Remote Computers
+3.3 ESS processes on Remote Computers
 =====================================
 
 ESS works with processes on remote computers as easily as with
@@ -2650,7 +2561,7 @@ processes on remote computers.  *Note S+elsewhere and ESS-elsewhere::.
 
 File: ess.info,  Node: S+elsewhere and ESS-elsewhere,  Next: Customizing startup,  Prev: ESS processes on Remote Computers,  Up: Interactive ESS
 
-4.4 S+elsewhere and ESS-elsewhere
+3.4 S+elsewhere and ESS-elsewhere
 =================================
 
 These commands are now deprecated.  We recommend `ess-remote'.  We have
@@ -2706,7 +2617,7 @@ as stable.
 
 File: ess.info,  Node: Customizing startup,  Prev: S+elsewhere and ESS-elsewhere,  Up: Interactive ESS
 
-4.5 Changing the startup actions
+3.5 Changing the startup actions
 ================================
 
 If you do not wish ESS to prompt for a starting directory when starting
@@ -2764,7 +2675,7 @@ process to appear within another window of the current frame.
 
 File: ess.info,  Node: Entering commands,  Next: Evaluating code,  Prev: Interactive ESS,  Up: Top
 
-5 Interacting with the ESS process
+4 Interacting with the ESS process
 **********************************
 
 The primary function of the ESS package is to provide an easy-to-use
@@ -2790,7 +2701,7 @@ commands are also provided for ease of typing.
 
 File: ess.info,  Node: Command-line editing,  Next: Transcript,  Prev: Entering commands,  Up: Entering commands
 
-5.1 Entering commands and fixing mistakes
+4.1 Entering commands and fixing mistakes
 =========================================
 
 Sending a command to the ESS process is as simple as typing it in and
@@ -2826,7 +2737,7 @@ entering input.
 
 File: ess.info,  Node: Transcript,  Next: Command History,  Prev: Command-line editing,  Up: Entering commands
 
-5.2 Manipulating the transcript
+4.2 Manipulating the transcript
 ===============================
 
 Most of the time, the cursor spends most of its time at the bottom of
@@ -2862,7 +2773,7 @@ information about page commands, *note Pages: (emacs)Pages.
 
 File: ess.info,  Node: Last command,  Next: Process buffer motion,  Prev: Transcript,  Up: Transcript
 
-5.2.1 Manipulating the output from the last command
+4.2.1 Manipulating the output from the last command
 ---------------------------------------------------
 
 Viewing the output of the command you have just entered is a common
@@ -2873,10 +2784,6 @@ window.  The first part of the command output may have scrolled off the
 top of the window, even though the entire output would fit in the window
 if the prompt were near the bottom of the window.  If this happens, you
 can use the command
-
-   * `C-c C-e' (`comint-show-maximum-output')
-     Move to the end of the buffer, and place cursor on bottom line of
-     window.
 
 to make more of the last output visible.  (To make this happen
 automatically for all inputs, set the variable
@@ -2899,7 +2806,7 @@ more manageable size.
 
 File: ess.info,  Node: Process buffer motion,  Next: Transcript resubmit,  Prev: Last command,  Up: Transcript
 
-5.2.2 Viewing older commands
+4.2.2 Viewing older commands
 ----------------------------
 
 If you want to view the output from more historic commands than the
@@ -2933,7 +2840,7 @@ command matching the pattern.
 
 File: ess.info,  Node: Transcript resubmit,  Next: Saving transcripts,  Prev: Process buffer motion,  Up: Transcript
 
-5.2.3 Re-submitting commands from the transcript
+4.2.3 Re-submitting commands from the transcript
 ------------------------------------------------
 
 When moving through the transcript, you may wish to re-execute some of
@@ -2984,7 +2891,7 @@ is described in *note Command History::.
 
 File: ess.info,  Node: Saving transcripts,  Prev: Transcript resubmit,  Up: Transcript
 
-5.2.4 Keeping a record of your S session
+4.2.4 Keeping a record of your S session
 ----------------------------------------
 
 To keep a record of your S session in a disk file, use the Emacs
@@ -3020,7 +2927,7 @@ the commands.  Don't forget to remove any erroneous commands first!
 
 File: ess.info,  Node: Command History,  Next: History expansion,  Prev: Transcript,  Up: Entering commands
 
-5.3 Command History
+4.3 Command History
 ===================
 
 ESS provides easy-to-use facilities for re-executing or editing previous
@@ -3102,7 +3009,7 @@ cannot be part of `ESS' itself.
 
 File: ess.info,  Node: Saving History,  Prev: Command History,  Up: Command History
 
-5.3.1 Saving the command history
+4.3.1 Saving the command history
 --------------------------------
 
 The `ess-history-file' variable, which is `t' by default, together with
@@ -3117,12 +3024,12 @@ any history files, and hence have
        (setq ess-history-file nil)
    or will only want one global command history file and have
        (setq ess-history-directory "~/.R/")
-   in there `.emacs' file.
+   in your `.emacs' file.
 
 
 File: ess.info,  Node: History expansion,  Next: Hot keys,  Prev: Command History,  Up: Entering commands
 
-5.4 References to historical commands
+4.4 References to historical commands
 =====================================
 
 Instead of searching through the command history using the command
@@ -3208,7 +3115,7 @@ or press <RET> to execute.
 
 File: ess.info,  Node: Hot keys,  Next: Statistical Process running in ESS?,  Prev: History expansion,  Up: Entering commands
 
-5.5 Hot keys for common commands
+4.5 Hot keys for common commands
 ================================
 
 ESS provides a number of commands for executing the commonly used
@@ -3234,8 +3141,6 @@ keys that behave in this way:
    * `C-c C-s' (`ess-execute-search')
      Sends the `search()' command to the ESS process.  
 
-   * `C-c C-e' (`ess-execute')
-     Prompt for an ESS expression, and evaluate it.
 
    `ess-execute' may seem pointless when you could just type the
 command in anyway, but it proves useful for `spot' calculations which
@@ -3278,7 +3183,7 @@ process buffer or in a separate buffer, as indicated:
 
 File: ess.info,  Node: Statistical Process running in ESS?,  Next: Emacsclient,  Prev: Hot keys,  Up: Entering commands
 
-5.6 Is the Statistical Process running under ESS?
+4.6 Is the Statistical Process running under ESS?
 =================================================
 
 For the S languages (S, S-Plus, R) ESS sets an option in the current
@@ -3314,7 +3219,7 @@ the control of ESS.
 
 File: ess.info,  Node: Emacsclient,  Next: Other,  Prev: Statistical Process running in ESS?,  Up: Entering commands
 
-5.7 Using emacsclient
+4.7 Using emacsclient
 =====================
 
 When starting R or S under Unix, ESS sets
@@ -3331,7 +3236,7 @@ of the object `x' in a temporary Emacs buffer.
 
 File: ess.info,  Node: Other,  Prev: Emacsclient,  Up: Entering commands
 
-5.8 Other commands provided by inferior-ESS
+4.8 Other commands provided by inferior-ESS
 ===========================================
 
 The following commands are also provided in the process buffer:
@@ -3340,25 +3245,20 @@ The following commands are also provided in the process buffer:
      Sends a Control-C signal to the ESS process.  This has the effect
      of aborting the current command.
 
-   * `C-c C-z' (`ess-abort')
-     Sends a STOP signal to the ESS process, killing it immediately.
-     It's not a good idea to use this, in general: Neither `q()' nor
-     `.Last' will be executed and device drivers will not finish
-     cleanly.  This command is provided as a safety to
-     `comint-stop-subjob', which is usually bound to `C-c C-z'.  If you
-     want to quit from S, use `C-c C-q' (`ess-quit') instead.  
+   * `C-c C-z' (`ess-switch-to-inferior-or-script-buffer')
+     When in process buffer, return to the most recent script buffer.
+     When in a script buffer pop to the associated process buffer. This
+     is a single key command, that is `C-c C-z C-z' from a script
+     buffer returns to the original buffer.
 
-   * `C-c C-d' (`ess-dump-object-into-edit-buffer')
-     Prompts for an object to be edited in an edit buffer.  *Note
-     Editing objects::.
-
+   *
    Other commands available in Inferior S mode are discussed in *note
 Shell Mode: (emacs)Shell Mode.
 
 
 File: ess.info,  Node: Evaluating code,  Next: Transcript Mode,  Prev: Entering commands,  Up: Top
 
-6 Sending code to the ESS process
+5 Sending code to the ESS process
 *********************************
 
 Other commands are also available for evaluating portions of code in the
@@ -3367,16 +3267,16 @@ directly by the ESS process as if you had typed them in at the command
 line; the `source()' function is not used.  You may choose whether both
 the commands and their output appear in the process buffer (as if you
 had typed in the commands yourself) or if the output alone is echoed.
-The behavior is controlled by the variable `ess-eval-visibly-p' whose
+The behavior is controlled by the variable `ess-eval-visibly' whose
 default is `t' (display commands and output).  Passing a prefix
 argument (`C-u') to any of the following commands, however, reverses
-the meaning of `ess-eval-visibly-p' for that command only -- for
-example `C-u C-c C-j' suppresses the current line of S (or other) code
-in the ESS process buffer.  This method of evaluation is an alternative
-to S's `source()' function when you want the input as well as the
-output to be displayed.  (You can sort of do this with `source()' when
-the option `echo=T' is set, except that prompts do not get displayed.
-ESS puts prompts in the right places.)
+the meaning of `ess-eval-visibly' for that command only -- for example
+`C-u C-c C-j' suppresses the current line of S (or other) code in the
+ESS process buffer.  This method of evaluation is an alternative to S's
+`source()' function when you want the input as well as the output to be
+displayed.  (You can sort of do this with `source()' when the option
+`echo=T' is set, except that prompts do not get displayed.  ESS puts
+prompts in the right places.)
 
    Primary commands for evaluating code are:
 
@@ -3428,12 +3328,6 @@ purposes, or for generating transcripts from source files.  When editing
 S functions, `C-c C-l' is the command to use to update the function's
 value.  In particular, `ess-eval-buffer' is now largely obsolete.
 
-   One final command is provided for spot-evaluations of S code:
-
-     `C-c C-t' (`ess-execute-in-tb')
-     Prompt for an S expression and evaluate it.  Displays result in a
-     temporary buffer.
-
 This is useful for quick calculations, etc.
 
    All the above commands are useful for evaluating small amounts of
@@ -3447,7 +3341,7 @@ bottom of the window, you will need to set the variable
 
 File: ess.info,  Node: Transcript Mode,  Next: Editing objects,  Prev: Evaluating code,  Up: Top
 
-7 Manipulating saved transcript files
+6 Manipulating saved transcript files
 *************************************
 
 Inferior S mode records the transcript (the list of all commands
@@ -3473,7 +3367,7 @@ commands or with `C-c C-p' and `C-c C-n'.
 
 File: ess.info,  Node: Resubmit,  Next: Clean,  Prev: Transcript Mode,  Up: Transcript Mode
 
-7.1 Resubmitting commands from the transcript file
+6.1 Resubmitting commands from the transcript file
 ==================================================
 
 Three commands are provided to re-submit command lines from the
@@ -3499,7 +3393,7 @@ automatically removed before the command is submitted.
 
 File: ess.info,  Node: Clean,  Prev: Resubmit,  Up: Transcript Mode
 
-7.2 Cleaning transcript files
+6.2 Cleaning transcript files
 =============================
 
 Yet another use for transcript files is to extract the command lines for
@@ -3518,7 +3412,7 @@ from S mode, also available in S Transcript Mode.
 
 File: ess.info,  Node: Editing objects,  Next: Help,  Prev: Transcript Mode,  Up: Top
 
-8 Editing objects and functions
+7 Editing objects and functions
 *******************************
 
 ESS provides facilities for editing S objects within your Emacs
@@ -3543,12 +3437,12 @@ ESS process.
 
 File: ess.info,  Node: Edit buffer,  Next: Loading,  Prev: Editing objects,  Up: Editing objects
 
-8.1 Creating or modifying S objects
+7.1 Creating or modifying S objects
 ===================================
 
 To edit an S object, type
 
-   * `C-c C-d' (`ess-dump-object-into-edit-buffer')
+   * `C-c C-e C-d' (`ess-dump-object-into-edit-buffer')
      Edit an S object in its own edit buffer.
 
    from within the ESS process buffer (`*S*').  You will then be
@@ -3567,9 +3461,9 @@ major mode which provides a number of commands to facilitate editing S
 source code.  Commands are provided to intelligently indent S code,
 evaluate portions of S code and to move around S code constructs.
 
-   Note: when you dump a file with `C-c C-d', ESS first checks to see
-whether there already exists an edit buffer containing that object and,
-if so, pops you directly to that buffer.  If not, ESS next checks
+   Note: when you dump a file with `C-c C-e C-d', ESS first checks to
+see whether there already exists an edit buffer containing that object
+and, if so, pops you directly to that buffer.  If not, ESS next checks
 whether there is a file in the appropriate place with the appropriate
 name (*note Source Files::) and if so, reads in that file.  You can use
 this facility to return to an object you were editing in a previous
@@ -3579,19 +3473,19 @@ Finally, if both these tests fail, the ESS process is consulted and a
 process for the object's definition (say, to reformat an unmodified
 buffer or to revert back to S's idea of the object's definition) pass a
 prefix argument to `ess-dump-object-into-edit-buffer' by typing `C-u
-C-c C-d'.
+C-c C-e C-d'.
 
 
 File: ess.info,  Node: Loading,  Next: Error Checking,  Prev: Edit buffer,  Up: Editing objects
 
-8.2 Loading source files into the ESS process
+7.2 Loading source files into the ESS process
 =============================================
 
 The best way to get information -- particularly function definitions --
 into S is to load them in as source file, using S's `source' function.
-You have already seen how to create source files using `C-c C-d'; ESS
-provides a complementary command for loading source files (even files
-not created with ESS!) into the ESS process:
+You have already seen how to create source files using `C-c C-e C-d';
+ESS provides a complementary command for loading source files (even
+files not created with ESS!) into the ESS process:
 
    * `C-c C-l' (`ess-load-file')
      Loads a file into the ESS process using `source()'.  
@@ -3600,14 +3494,14 @@ After typing `C-c C-l' you will prompted for the name of the file to
 load into S; usually this is the current buffer's file which is the
 default value (selected by simply pressing `RET' at the prompt).  You
 will be asked to save the buffer first if it has been modified (this
-happens automatically if the buffer was generated with `C-c C-d').  The
-file will then be loaded, and if it loads successfully you will be
+happens automatically if the buffer was generated with `C-c C-e C-d').
+The file will then be loaded, and if it loads successfully you will be
 returned to the ESS process.
 
 
 File: ess.info,  Node: Error Checking,  Next: Indenting,  Prev: Loading,  Up: Editing objects
 
-8.3 Detecting errors in source files
+7.3 Detecting errors in source files
 ====================================
 
 If any errors occur when loading a file with `C-c C-l', ESS will inform
@@ -3628,7 +3522,7 @@ by passing a prefix argument to `ess-parse-errors' with `C-u C-c `'.
 
 File: ess.info,  Node: Indenting,  Next: Other edit buffer commands,  Prev: Error Checking,  Up: Editing objects
 
-8.4 Indenting and formatting S code
+7.4 Indenting and formatting S code
 ===================================
 
 ESS provides a sophisticated mechanism for indenting S source code
@@ -3640,7 +3534,7 @@ appropriate place as well.  Lines which continue an incomplete
 expression are indented relative to the first line of the expression.
 Function definitions, `if' statements, calls to `expression()' and loop
 constructs are all recognized and indented appropriately.  User
-variables are provided to control the amount if indentation in each
+variables are provided to control the amount of indentation in each
 case, and there are also a number of predefined indentation styles to
 choose from.
 
@@ -3667,7 +3561,7 @@ maintained in the source code as comments *Note Roxygen::.
      are preserved).
 
    * `RET' (`newline-and-indent')
-     `LFD' (_newline-and-indent_)
+     `LFD' (`newline-and-indent')
      Insert a newline, and indent the next line.  (Note that most
      keyboards nowadays do not have a <LINEFEED> key, but `C-j' is
      equivalent.)
@@ -3697,7 +3591,7 @@ maintained in the source code as comments *Note Roxygen::.
 
 File: ess.info,  Node: Styles,  Prev: Indenting,  Up: Indenting
 
-8.4.1 Changing indentation styles
+7.4.1 Changing indentation styles
 ---------------------------------
 
 The combined value of nine variables that control indentation are
@@ -3733,7 +3627,7 @@ Finally, add `(setq ess-default-style 'MINE)' to use your new style.
 
 File: ess.info,  Node: Other edit buffer commands,  Next: Source Files,  Prev: Indenting,  Up: Editing objects
 
-8.5 Commands for motion, completion and more
+7.5 Commands for motion, completion and more
 ============================================
 
 A number of commands are provided to move across function definitions
@@ -3768,24 +3662,24 @@ buffer:
 
    In addition some commands available in the process buffer are also
 available in the edit buffer.  You can still read help files with `C-c
-C-v', edit another function with `C-c C-d' and of course `C-c C-l' can
-be used to load a source file into S.  *Note Other::, for more details
-on these commands.
+C-v', edit another function with `C-c C-e C-d' and of course `C-c C-l'
+can be used to load a source file into S.  *Note Other::, for more
+details on these commands.
 
 
 File: ess.info,  Node: Source Files,  Next: Source Directories,  Prev: Other edit buffer commands,  Up: Editing objects
 
-8.6 Maintaining S source files
+7.6 Maintaining S source files
 ==============================
 
 Every edit buffer in ESS is associated with a "dump file" on disk.
-Dump files are created whenever you type `C-c C-d'
+Dump files are created whenever you type `C-c C-e C-d'
 (`ess-dump-object-into-edit-buffer'), and may either be deleted after
 use, or kept as a backup file or as a means of keeping several versions
 of an S function.  
 
  -- User Option: ess-delete-dump-files
-     If non-`nil', dump files created with C-c C-d are deleted
+     If non-`nil', dump files created with C-c C-e C-d are deleted
      immediately after they are created by the ess-process.
 
    Since immediately after S dumps an object's definition to a disk
@@ -3802,7 +3696,7 @@ default value is `t'.
      Option controlling what to do with the dump file after an object
      has been successfully loaded into S.  Valid values are `nil'
      (always delete), `ask' (always ask whether to delete), `check'
-     (delete files generated with `C-c C-d' in this Emacs session,
+     (delete files generated with `C-c C-e C-d' in this Emacs session,
      otherwise ask -- this is the default) and `t' (never delete).
      This variable is buffer-local.
 
@@ -3821,33 +3715,33 @@ historic record of function definitions.  Another possibility is to
 maintain the files with a version-control system such as RCS *Note
 Version Control: (emacs)Version Control.  As long as a dump file exists
 in the appropriate place for a particular object, editing that object
-with `C-c C-d' finds that file for editing (unless a prefix argument is
-given) -- the ESS process is not consulted.  Thus you can keep comments
-_outside_ the function definition as a means of documentation that does
-not clutter the S object itself.  Another useful feature is that you
-may format the code in any fashion you please without S re-indenting
-the code every time you edit it.  These features are particularly
-useful for project-based work.
+with `C-c C-e C-d' finds that file for editing (unless a prefix
+argument is given) -- the ESS process is not consulted.  Thus you can
+keep comments _outside_ the function definition as a means of
+documentation that does not clutter the S object itself.  Another
+useful feature is that you may format the code in any fashion you
+please without S re-indenting the code every time you edit it.  These
+features are particularly useful for project-based work.
 
    If the value of `ess-keep-dump-files' is nil, the dump file is always
 silently deleted after a successful load with `C-c C-l'.  While this is
-useful for files that were created with `C-c C-d' it also applies to
-any other file you load (say, a source file of function definitions),
-and so can be dangerous to use unless you are careful.  Note that since
-`ess-keep-dump-files' is buffer-local, you can make sure particular
-files are not deleted by setting it to `t' in the Local Variables
-section of the file *Note Local Variables in Files: (emacs)File
-Variables.
+useful for files that were created with `C-c C-e C-d' it also applies
+to any other file you load (say, a source file of function
+definitions), and so can be dangerous to use unless you are careful.
+Note that since `ess-keep-dump-files' is buffer-local, you can make
+sure particular files are not deleted by setting it to `t' in the Local
+Variables section of the file *Note Local Variables in Files:
+(emacs)File Variables.
 
    A safer option is to set `ess-keep-dump-files' to `ask'; this means
 that ESS will always ask for confirmation before deleting the file.
 Since this can get annoying if you always want to delete dump files
-created with `C-c C-d', but not any other files, setting
+created with `C-c C-e C-d', but not any other files, setting
 `ess-keep-dump-files' to `check' (the default value) will silently
-delete dump files created with `C-c C-d' in the current Emacs session,
-but query for any other file.  Note that in any case you will only be
-asked for confirmation once per file, and your answer is remembered for
-the rest of the Emacs session.
+delete dump files created with `C-c C-e C-d' in the current Emacs
+session, but query for any other file.  Note that in any case you will
+only be asked for confirmation once per file, and your answer is
+remembered for the rest of the Emacs session.
 
    Note that in all cases, if an error (such as a syntax error) is
 detected while loading the file with `C-c C-l', the dump file is _never_
@@ -3860,7 +3754,7 @@ if you happen to quit Emacs before correcting the error.
 
 File: ess.info,  Node: Source Directories,  Prev: Source Files,  Up: Editing objects
 
-8.7 Names and locations of dump files
+7.7 Names and locations of dump files
 =====================================
 
 Every dump file should be given a unique file name, usually the dumped
@@ -3928,7 +3822,7 @@ you will not be able to edit functions.
 
 File: ess.info,  Node: Help,  Next: Completion,  Prev: Editing objects,  Up: Top
 
-9 Reading help files
+8 Reading help files
 ********************
 
 ESS provides an easy-to-use facility for reading S help files from
@@ -4088,8 +3982,8 @@ variable `ess-help-own-frame'.
 
 File: ess.info,  Node: Completion,  Next: Developing with ESS,  Prev: Help,  Up: Top
 
-10 Completion
-*************
+9 Completion
+************
 
 * Menu:
 
@@ -4101,8 +3995,8 @@ File: ess.info,  Node: Completion,  Next: Developing with ESS,  Prev: Help,  Up:
 
 File: ess.info,  Node: Object names,  Next: Function arguments,  Prev: Completion,  Up: Completion
 
-10.1 Completion of object names
-===============================
+9.1 Completion of object names
+==============================
 
 The <TAB> key is for completion. In `ess-mode' <TAB> first tries to
 indent, and if there is nothing to indent, complete the object name
@@ -4157,8 +4051,8 @@ the _entire_ cache to be refreshed, which should fix the problem.
 
 File: ess.info,  Node: Function arguments,  Next: Minibufer completion,  Prev: Object names,  Up: Completion
 
-10.2 Completion of function arguments
-=====================================
+9.2 Completion of function arguments
+====================================
 
 When inside a function call (i.e. following ``(''), `TAB' completion
 also provides function arguments. If function is a generic, completion
@@ -4170,8 +4064,8 @@ arguments in the echo area whenever the point is inside a function call.
 
 File: ess.info,  Node: Minibufer completion,  Next: Auto-complete,  Prev: Function arguments,  Up: Completion
 
-10.3 Minibufer completion
-=========================
+9.3 Minibufer completion
+========================
 
 From version 12.03, ESS uses `IDO' mechanism (part of default emacs)
 for minibufer completion if `ido.el' package is available and the value
@@ -4182,15 +4076,15 @@ if this feature is not available for whatever reason.
 
 File: ess.info,  Node: Auto-complete,  Prev: Minibufer completion,  Up: Completion
 
-10.4 Integration with auto-complete package
-===========================================
+9.4 Integration with auto-complete package
+==========================================
 
-ESS provides three sources for `Auto Completion' mode
-(`http://cx4a.org/software/auto-complete/') - `ac-source-R-args',
-`ac-source-R-objects' and `ac-source-R'.  The last one combines the
-previous two and makes them play nicely together.  See auto-complete
-package documentation (`http://cx4a.org/software/auto-complete/') for
-how to modify and install your own completion sources.
+ESS provides three sources for `Auto Completion' mode:
+`ac-source-R-args', `ac-source-R-objects' and `ac-source-R'.  The last
+one combines the previous two and makes them play nicely together.  See
+auto-complete package documentation
+(`http://cx4a.org/software/auto-complete/') for how to modify and
+install your own completion sources.
 
    For the default auto-complete ESS configuration, install the latest
 version of `auto-complete' package. ESS automatically detect the
@@ -4221,7 +4115,7 @@ R. Bind it to something else:
 
 File: ess.info,  Node: Developing with ESS,  Next: Extras,  Prev: Completion,  Up: Top
 
-11 Developing with ESS
+10 Developing with ESS
 **********************
 
 ESS provides several tools to help you with the development of your R
@@ -4236,12 +4130,12 @@ packages:
 
 File: ess.info,  Node: ESS tracebug,  Next: Editing documentation,  Prev: Developing with ESS,  Up: Developing with ESS
 
-11.1 ESS tracebug
+10.1 ESS tracebug
 =================
 
-_Note:_ The official ess-tracebug documentation is still at
-`http://code.google.com/p/ess-tracebug/', and is currently being moved
-into this manual.
+_Note:_ The official ess-tracebug documentation is at
+`http://code.google.com/p/ess-tracebug/', but it is in the process of
+being moved into this manual.
 
    ESS `tracebug' package offers visual debugging, interactive error
 navigation, interactive backtrace, breakpoint manipulation, control over
@@ -4252,12 +4146,12 @@ functions for debugging.
 
      (setq ess-use-tracebug t)
 
-   You can also toggle it from the menu or simply by typing `M-x'
-`ess-tracebug' `RET'.
+   You can also toggle it from the menu, with `C-c C-t T', or simply by
+typing `M-x' `ess-tracebug' `RET'.
 
-   Almost all of the tracebug functionality can be found in
-`ess-dev-map', which is bound to `C-c d'. Optionally you can assign the
-full tracebug map to a shorter prefix:
+   Almost all of the tracebug functionality can be found on
+`ess-dev-map', which is bound to `C-c C-t'. Optionally you can assign
+the full tracebug map to a shorter prefix:
 
      (setq ess-tracebug-prefix "\M-t")
 
@@ -4266,9 +4160,8 @@ to be triggered by `M-t M-t'. Another alternative key, you might
 consider is `M-c'. In this case, the hijacked command `capitalize-word'
 is automatically re-bound to `M-c M-c'.
 
-   You can always call `C-c d ?' (or `M-t ?' if prefix is set) to
-display the following menu with all the tracebug keys (prefix not
-included):
+   You can always call `C-c C-t ?'  to display the following menu with
+all the tracebug keys (prefix not included):
 
 * Breakpoints:
 
@@ -4306,8 +4199,8 @@ C-p . Goto previous BP                 . `ess-bp-previous'
 
 * Input Ring:
 
- i   . Goto input event marker forwards     . `ess-dbg-goto-input-event-marker'
- I   . Goto input event marker backwards    . `ess-dbg-goto-input-event-marker'
+ i   . Goto input event marker forwards  . `ess-dbg-goto-input-event-marker'
+ I   . Goto input event marker backwards . `ess-dbg-goto-input-event-marker'
 
 * Misc:
  ?   . Show this help		. `ess-tracebug-show-help'
@@ -4315,7 +4208,7 @@ C-p . Goto previous BP                 . `ess-bp-previous'
 
 File: ess.info,  Node: Editing documentation,  Next: ESS developer,  Prev: ESS tracebug,  Up: Developing with ESS
 
-11.2 Editing documentation
+10.2 Editing documentation
 ==========================
 
 ESS provides two ways of writing documentation for R objects. Either
@@ -4331,7 +4224,7 @@ Roxygen package.
 
 File: ess.info,  Node: R documentation files,  Next: Roxygen,  Prev: Editing documentation,  Up: Editing documentation
 
-11.2.1 Editing R documentation (Rd) files
+10.2.1 Editing R documentation (Rd) files
 -----------------------------------------
 
 R objects are documented in files written in the "R documentation"
@@ -4432,7 +4325,7 @@ mode, add the following lines to one of your Emacs startup files:
 
 File: ess.info,  Node: Roxygen,  Prev: R documentation files,  Up: Editing documentation
 
-11.2.2 Editing Roxygen documentation
+10.2.2 Editing Roxygen documentation
 ------------------------------------
 
 The Roxygen R package makes it possible to keep the intended contents
@@ -4465,7 +4358,7 @@ toggle visibility of Roxygen entries and the Roxygen template.
    All ESS Roxygen support is defined in `ess-roxy.el' which is loaded
 by default in ESS. The following special Emacs commands are provided.
 
-   * `C-c C-o' (`ess-roxy-update-entry')
+   * `C-c C-o C-o' (`ess-roxy-update-entry')
      Generate a Roxygen template or update the parameter list in Roxygen
      entry at point (or above the function at the point). Documented
      parameters that are not in the function are placed last in the
@@ -4473,36 +4366,36 @@ by default in ESS. The following special Emacs commands are provided.
      are dropped. Parameter descriptions are filled if
      `ess-roxy-fill-param-p' is non-nil.
 
-   * `C-c C-e C-c' (`ess-roxy-toggle-roxy-region')
+   * `C-c C-o C-c' (`ess-roxy-toggle-roxy-region')
      Toggle the presence of the leading Roxygen string on all lines in
      the marked region. Convenient for transferring text to Roxygen
      entries and to evaluate example fields.
 
-   * `C-c C-e C-r' (`ess-roxy-preview-Rd')
+   * `C-c C-o C-r' (`ess-roxy-preview-Rd')
      Use the attached R process to parse the entry at point to obtain
      the Rd code. Convenient for previewing and checking syntax. When
      used with the prefix argument, i.e. `C-u C-c C-e C-r', place the
      content in a buffer associated with a Rd file with the same name
      as the documentation. Requires the Roxygen package to be installed.
 
-   * `C-c C-e C-t' (`ess-roxy-preview-HTML')
+   * `C-c C-o C-t' (`ess-roxy-preview-HTML')
      Use the attached R process to parse the entry at to generate HTML
      for the entry and open it in a browser. When used with the prefix
      argument, i.e. `C-u C-c C-e C-t', visit the generated HTML file
      instead.  Requires the Roxygen and tools packages to be installed.
 
-   * `C-c C-e p' (`ess-roxy-previous-entry')
+   * `C-c C-o p' (`ess-roxy-previous-entry')
      Go to start of the Roxygen entry above point.
 
-   * `C-c C-e n'  (`ess-roxy-next-entry')
+   * `C-c C-o n'  (`ess-roxy-next-entry')
      Go to end of the Roxygen entry above point.
 
-   * `C-c C-e C-h' (`ess-roxy-hide-all')
+   * `C-c C-o C-h' (`ess-roxy-hide-all')
      Use the hideshow mode to fold away the visibility of all Roxygen
      entries. Hide-show support must be enabled for this binding to get
      defined.
 
-     ESS also advices the following standard editing functions in order
+     ESS also advises the following standard editing functions in order
      to make Roxygen editing more intuitive:
 
    * `TAB' (`ess-R-complete-object-name')
@@ -4530,7 +4423,7 @@ by default in ESS. The following special Emacs commands are provided.
 
 File: ess.info,  Node: ESS developer,  Prev: Editing documentation,  Up: Developing with ESS
 
-11.3 ESS developer
+10.3 ESS developer
 ==================
 
 Usual ESS evaluation commands, *Note Evaluating code::, send portions of
@@ -4561,28 +4454,28 @@ and functions defined in .GlobalEnv can see the objects in
 `http://cran.r-project.org/doc/manuals/R-ints.html#Namespaces'.
 
    In order to use ess-developer mode add names of the packages you are
-developing to `ess-developer-packages'. You can do taht interactively
-with `C-c d a', and remove packages with `C-c d r'. When developer mode
-is on, the name of the process in the mode line is highlighted with
-`ess-developer-indicator-face'.
+developing to `ess-developer-packages'. You can do that interactively
+with `C-c C-t a', and remove packages with `C-c C-t r'. When developer
+mode is on, the name of the process in the mode line is highlighted
+with `ess-developer-indicator-face'.
 
-   * `C-c d t'(`ess-developer')
+   * `C-c C-t C-t'(`ess-developer')
      Toggle developer mode on and off.
 
-   * `C-c d a'(`ess-developer-add-package')
+   * `C-c C-t C-a'(`ess-developer-add-package')
      Add  a package to your development list.
 
-   * `C-c d r'(`ess-developer-remove-package')
+   * `C-c C-t C-r'(`ess-developer-remove-package')
      Remove a package from your development list.
 
    When developer mode is on, ESS evaluation commands behave
 differently:
    * `C-c C-l' (`ess-load-file') asks for the package to source into
-     and inserts all redefined objects into the package:foo or name
-     space:foo accordingly:
+     and inserts all redefined objects into the package:foo or
+     namespace:foo accordingly
 
         - PLAIN OBJECTS and FUNCTIONS:
-          If the object is found in an environment (packag:foo or
+          If the object is found in an environment (package:foo or
           namespace:foo),   and differs from the old one it is assigned
           into the corresponding   environment. If the object is not
           found it is assigned into   .GlobalEnv. The environment of
@@ -4629,10 +4522,10 @@ differently:
      that namespace. If not found, it is assigned into .GlobalEnv.
 
 
-File: ess.info,  Node: Extras,  Next: ESS for SAS,  Prev: Developing with ESS,  Up: Top
+File: ess.info,  Node: Extras,  Next: ESS for S,  Prev: Developing with ESS,  Up: Top
 
-12 Other ESS features for the S family
-**************************************
+11 Other ESS features and tools
+*******************************
 
 ESS has a few extra features, which didn't fit anywhere else.
 
@@ -4654,7 +4547,7 @@ ESS has a few extra features, which didn't fit anywhere else.
 
 File: ess.info,  Node: ESS ElDoc,  Next: Handy commands,  Prev: Extras,  Up: Extras
 
-12.1 ElDoc
+11.1 ElDoc
 ==========
 
 In `ElDoc' mode, the echo area displays function's arguments at point.
@@ -4685,7 +4578,7 @@ different filter levels with the truncation.
 
 File: ess.info,  Node: Handy commands,  Next: Highlighting,  Prev: ESS ElDoc,  Up: Extras
 
-12.2 Handy commands
+11.2 Handy commands
 ===================
 
 `C-c h' is bound to `ess-handy-commands' and executes commands listed in
@@ -4732,7 +4625,7 @@ not found, ask user for interactive install.
 
 File: ess.info,  Node: Highlighting,  Next: Parens,  Prev: Handy commands,  Up: Extras
 
-12.3 Syntactic highlighting of buffers
+11.3 Syntactic highlighting of buffers
 ======================================
 
 ESS provides Font-Lock (*note Using Multiple Typefaces: (emacs)Faces.)
@@ -4764,7 +4657,7 @@ you may modify if desired:
 
 File: ess.info,  Node: Parens,  Next: Graphics,  Prev: Highlighting,  Up: Extras
 
-12.4 Parenthesis matching
+11.4 Parenthesis matching
 =========================
 
 Emacs and XEmacs have facilities for highlighting the parenthesis
@@ -4780,7 +4673,7 @@ initialisation file:
 
 File: ess.info,  Node: Graphics,  Next: Imenu,  Prev: Parens,  Up: Extras
 
-12.5 Using graphics with ESS
+11.5 Using graphics with ESS
 ============================
 
 One of the main features of the `S' package is its ability to generate
@@ -4796,7 +4689,7 @@ for dealing with such plots.
 
 File: ess.info,  Node: printer,  Next: X11,  Prev: Graphics,  Up: Graphics
 
-12.5.1 Using ESS with the `printer()' driver
+11.5.1 Using ESS with the `printer()' driver
 --------------------------------------------
 
 This is the simplest (and least desirable) method of using graphics
@@ -4813,7 +4706,7 @@ issued, which displays the current figure.
 
 File: ess.info,  Node: X11,  Next: winjava,  Prev: printer,  Up: Graphics
 
-12.5.2 Using ESS with windowing devices
+11.5.2 Using ESS with windowing devices
 ---------------------------------------
 
 Of course, the ideal way to use graphics with ESS is to use a windowing
@@ -4826,7 +4719,7 @@ DISPLAY before the ESS process is started if the variable
 
 File: ess.info,  Node: winjava,  Prev: X11,  Up: Graphics
 
-12.5.3 Java Graphics Device
+11.5.3 Java Graphics Device
 ---------------------------
 
 S+6.1 and newer on Windows contains a java library that supports
@@ -4842,7 +4735,7 @@ this information.)
 
 File: ess.info,  Node: Imenu,  Next: Toolbar,  Prev: Graphics,  Up: Extras
 
-12.6 Imenu
+11.6 Imenu
 ==========
 
 Imenu is an Emacs tool for providing mode-specific buffer indexes.  In
@@ -4861,7 +4754,7 @@ various ESS variables such as `ess-imenu-S-generic-expression'.
 
 File: ess.info,  Node: Toolbar,  Next: TAGS,  Prev: Imenu,  Up: Extras
 
-12.7 Toolbar
+11.7 Toolbar
 ============
 
 The R and S editing modes have support for a toolbar.  This toolbar
@@ -4873,7 +4766,7 @@ ways to change the toolbar.
 
 File: ess.info,  Node: TAGS,  Next: Rdired,  Prev: Toolbar,  Up: Extras
 
-12.8 TAGS
+11.8 TAGS
 =========
 
 The Emacs tags facility can be used to navigate around your files
@@ -4911,18 +4804,13 @@ started:
 
 File: ess.info,  Node: Rdired,  Next: Rutils,  Prev: TAGS,  Up: Extras
 
-12.9 Rdired
+11.9 Rdired
 ===========
 
 Ess-rdired provides a dired-like buffer for viewing, editing and
 plotting objects in your current R session.  If you are used to using
 the dired (directory editor) facility in Emacs, this mode gives you
 similar functionality for R objects.
-
-   To get started, first make sure you can load ess-rdired.  Add the
-following to your .emacs and then restart emacs.
-     (autoload 'ess-rdired "ess-rdired"
-       "View *R* objects in a dired-like buffer." t)
 
    Start an R session with `M-x R' and then store a few variables, such
 as:
@@ -4948,7 +4836,7 @@ the object, `v' will view it, and `d' will mark the object for deletion
 
 File: ess.info,  Node: Rutils,  Next: Org,  Prev: Rdired,  Up: Extras
 
-12.10 Rutils
+11.10 Rutils
 ============
 
 Ess-rutils builds up on ess-rdired, providing key bindings for
@@ -5012,7 +4900,7 @@ bindings in this mode (type `?' in this buffer for a description).
 
 File: ess.info,  Node: Org,  Next: Sweave and AUCTeX,  Prev: Rutils,  Up: Extras
 
-12.11 Interaction with Org mode
+11.11 Interaction with Org mode
 ===============================
 
 Org-mode (`http://orgmode.org') now supports reproducible research and
@@ -5031,7 +4919,7 @@ R process.  (This section contributed by Dan Davison and Eric Schulte.)
 
 File: ess.info,  Node: Sweave and AUCTeX,  Prev: Org,  Up: Extras
 
-12.12 Support for Sweave in ESS and AUCTeX
+11.12 Support for Sweave in ESS and AUCTeX
 ==========================================
 
 ESS provides support for writing and processing Sweave
@@ -5072,7 +4960,372 @@ cases, the process can be monitored with `C-c C-l'
 (`TeX-view'), as usual in AUCTeX.
 
 
-File: ess.info,  Node: ESS for SAS,  Next: ESS for BUGS,  Prev: Extras,  Up: Top
+File: ess.info,  Node: ESS for S,  Next: ESS for SAS,  Prev: Extras,  Up: Top
+
+12 Overview of ESS features for the S family
+********************************************
+
+* Menu:
+
+* ESS(S)--Editing files::
+* iESS(S)--Inferior ESS processes::
+* ESS-help--assistance with viewing help::
+* Philosophies for using ESS(S)::
+* Scenarios for use (possibilities--based on actual usage)::
+* Customization Examples and Solutions to Problems::
+
+
+File: ess.info,  Node: ESS(S)--Editing files,  Next: iESS(S)--Inferior ESS processes,  Prev: ESS for S,  Up: ESS for S
+
+12.1 ESS[S]-Editing files
+=========================
+
+ESS[S] is the mode for editing S language files.  This mode handles:
+
+   -  proper indenting, generated by both [Tab] and [Return].
+
+   -  color and font choices based on syntax.
+
+   -  ability to send the contents of an entire buffer, a highlighted
+     region, an S function, or a single line to an inferior S process,
+     if   one is currently running.
+
+   -  ability to switch between processes which would be the target of
+     the   buffer (for the above).
+
+   -  The ability to request help from an S process for variables and
+     functions, and to have the results sent into a separate buffer.
+
+   -  completion of object names and file names.
+
+   ESS[S] mode should be automatically turned on when loading a file
+with the suffices found in ess-site (*.R, *.S, *.s, etc).
+Alternatively, type `M-x R-mode' to put the current buffer into R mode.
+However, one will have to start up an inferior process to take
+advantage of the interactive features.
+
+
+File: ess.info,  Node: iESS(S)--Inferior ESS processes,  Next: ESS-help--assistance with viewing help,  Prev: ESS(S)--Editing files,  Up: ESS for S
+
+12.2 iESS[S]-Inferior ESS processes
+===================================
+
+iESS (inferior ESS) is the mode for interfacing with active statistical
+processes (programs).  This mode handles:
+
+   -  proper indenting, generated by both [Tab] and [Return].
+
+   -  color and font highlighting based on syntax.
+
+   -  ability to resubmit the contents of a multi-line command  to the
+     executing process with a single keystroke [RET].
+
+   -  The ability to request help from the current process for variables
+     and functions, and to have the results sent into a separate buffer.
+
+   -  completion of object names and file names.
+
+   -  interactive history mechanism.
+
+   -  transcript recording and editing.
+
+   To start up iESS mode, use:
+        M-x S+3
+        M-x S4
+        M-x S+5
+        M-x S+6
+        M-x R
+
+   (for S-PLUS 3.x, S4, S+5, S+6 or S+7, and R, respectively.  This
+assumes that you have access to each).  Usually the site will have
+defined one of these programs (by default S+6) to the simpler name:
+
+   M-x S
+
+   In the (rare) case that you wish to pass command line arguments to
+the starting S+6 process, set the variable `inferior-Splus-args'.
+
+   Note that R has some extremely useful command line arguments.  For
+example, `--vanilla' will ensure R starts up without loading in any init
+files.  To enter a command line argument, call R using a "prefix
+argument", by
+
+   C-u M-x R
+
+   and when ESS prompts for "Starting Args ? ", enter (for example):
+
+   `--vanilla'
+
+   Then that R process will be started up using `R --vanilla'.  If you
+wish to always call R with certain arguments, set the variable
+`inferior-R-args' accordingly.
+
+   If you have other versions of R or S-Plus available on the system,
+ESS is also able to start those versions.  How this exactly works
+depend on which OS you are using, as described in the following
+paragraphs.  The general principle, regardless of OS, is that ESS
+searches the paths listed in the variable `exec-path' for R binaries.
+If ESS cannot find your R binaries, on Unix you can change the unix
+environment variable `PATH', as this variable is used to set
+`exec-path'.
+
+   R on Unix systems: If you have "R-1.8.1" on your `exec-path', it can
+be started using `M-x R-1.8.1'.  By default, ESS will find versions of
+R beginning "R-1" or "R-2".  If your versions of R are called other
+names, consider renaming them with a symbolic link or change the
+variable `ess-r-versions'.  To see which functions have been created
+for starting different versions of R, type `M-x R-' and then hit [Tab].
+These other versions of R can also be started from the "ESS->Start
+Process->Other" menu.
+
+   R on Windows systems: If you have "rw1081" on your `exec-path', it
+can be started using `M-x rw1081'.  By default, ESS will find versions
+of R located in directories parallel to the version of R in your
+`PATH'.  If your versions of R are called other names, you will need to
+change the variable `ess-rterm-versions'.  To see which functions have
+been created for starting different versions of R, type `M-x rw' and
+then hit [Tab].  These other versions of R can also be started from the
+"ESS->Start Process->Other" menu.
+
+   Once ESS has found these extra versions of R, it will then create a
+new function, called `M-x R-newest', which will call the newest version
+of R that it found.  (ESS examines the date in the first line of
+information from `R --version' to determine which is newest.)
+
+   S on Unix systems: If you have "Splus7" on your `exec-path', it can
+be started using `M-x Splus7'.  By default, ESS will find all
+executables beginning "Splus" on your path.  If your versions of S are
+called other names, consider renaming them with a symbolic link or
+change the variable `ess-s-versions'.  To see which functions have been
+created for starting different versions of Splus, type `M-x Splus' and
+then hit [Tab].  These other versions of Splus can also be started from
+the "ESS->Start Process->Other" menu.
+
+   A second mechanim is also available for running other versions of
+Splus.  The variable `ess-s-versions-list' is a list of lists; each
+sublist should be of the form: (DEFUN-NAME PATH ARGS).  DEFUN-NAME is
+the name of the new emacs function you wish to create to start the new
+S process; PATH is the full path to the version of S you want to run;
+ARGS is an optional string of command-line arguments to pass to the S
+process.  Here is an example setting:
+     (setq ess-s-versions-list
+           '( ("Splus64" "/usr/local/bin/Splus64")
+              ("Splus64-j" "/usr/local/bin/Splus64" "-j")))
+   which will then allow you to do `M-x Splus64-j' to start  Splus64
+with the corresponding command line arguments.
+
+   If you change the value of either `ess-s-versions' or
+`ess-s-versions-list', you should put them in your .emacs before
+ess-site is loaded, since the new emacs functions are created when ESS
+is loaded.
+
+   Sqpe (S-Plus running inside an emacs buffer) on Windows systems: If
+you have an older version of S-Plus (S-Plus 6.1 for example) on your
+system, ir can be started inside an emacs buffer with `M-x splus61'.  By
+default, ESS will find versions of S-Plus located in the installation
+directories that Insightful uses by default.  If your versions of S-Plus
+are anywhere else, you will need to change the variable
+`ess-SHOME-versions'.  To see which functions have been created for
+starting different versions of S-Plus, type `M-x spl' and then hit
+[Tab].  These other versions of S-Plus can also be started from the
+"ESS->Start Process->Other" menu.
+
+
+File: ess.info,  Node: ESS-help--assistance with viewing help,  Next: Philosophies for using ESS(S),  Prev: iESS(S)--Inferior ESS processes,  Up: ESS for S
+
+12.3 ESS-help-assistance with viewing help
+==========================================
+
+ESS has built-in facilities for viewing help files from S.  *Note
+Help::.
+
+
+File: ess.info,  Node: Philosophies for using ESS(S),  Next: Scenarios for use (possibilities--based on actual usage),  Prev: ESS-help--assistance with viewing help,  Up: ESS for S
+
+12.4 Philosophies for using ESS[S]
+==================================
+
+The first is preferred, and configured for.  The second one can be
+retrieved again, by changing emacs variables.
+
+   1: (preferred by the current group of developers):  The source code
+is    real.  The objects are realizations of the source code.  Source
+for EVERY user modified object is placed in a particular directory
+or directories, for later editing and retrieval.
+
+   2: (older version): S objects are real.  Source code is a temporary
+ realization of the objects.  Dumped buffers should not be saved.
+_We_strongly_discourage_this_approach_.  However, if you insist,    add
+the following lines to your .emacs file:
+     (setq ess-keep-dump-files 'nil)
+     (setq ess-delete-dump-files t)
+     (setq ess-mode-silently-save nil)
+   The second saves a small amount of disk space.  The first allows for
+better portability as well as external version control for code.
+
+
+File: ess.info,  Node: Scenarios for use (possibilities--based on actual usage),  Next: Customization Examples and Solutions to Problems,  Prev: Philosophies for using ESS(S),  Up: ESS for S
+
+12.5 Scenarios for use (possibilities-based on actual usage)
+============================================================
+
+We present some basic suggestions for using ESS to interact with S.
+These are just a subset of approaches, many better approaches are
+possible.  Contributions of examples of how you work with ESS are
+appreciated (especially since it helps us determine priorities on
+future enhancements)! (comments as to what should be happening are
+prefixed by "##").
+     1:  ##    Data Analysis Example (source code is real)
+         ## Load the file you want to work with
+         C-x C-f myfile.s
+
+         ## Edit as appropriate, and then start up S-PLUS 3.x
+         M-x S+3
+
+         ## A new buffer *S+3:1* will appear.  Splus will have been started
+         ## in this buffer.  The buffer is in iESS [S+3:1] mode.
+
+         ## Split the screen and go back to the file editing buffer.
+         C-x 2 C-x b myfile.s
+
+         ## Send regions, lines, or the entire file contents to S-PLUS.  For regions,
+         ## highlight a region with keystrokes or mouse and then send with:
+         C-c C-r
+
+         ## Re-edit myfile.s as necessary to correct any difficulties.  Add
+         ## new commands here.  Send them to S by region with C-c C-r, or
+         ## one line at a time with C-c C-n.
+
+         ## Save the revised myfile.s with C-x C-s.
+
+         ## Save the entire *S+3:1* interaction buffer with C-c C-s.  You
+         ## will be prompted for a file name.  The recommended name is
+         ## myfile.St.  With the *.St suffix, the file will come up in ESS
+         ## Transcript mode the next time it is accessed from Emacs.
+
+
+
+     2:  ## Program revision example (source code is real)
+
+         ## Start up S-PLUS 3.x in a process buffer (this will be *S+3:1*)
+         M-x S+3
+
+         ## Load the file you want to work with
+         C-x C-f myfile.s
+
+         ## edit program, functions, and code in myfile.s, and send revised
+         ## functions to S when ready with
+         C-c C-f
+         ## or highlighted regions with
+         C-c C-r
+         ## or individual lines with
+         C-c C-n
+         ## or load the entire buffer with
+         C-c C-l
+
+         ## save the revised myfile.s when you have finished
+         C-c C-s
+
+
+
+     3:  ## Program revision example (S object is real)
+
+         ## Start up S-PLUS 3.x in a process buffer (this will be *S+3:1*)
+         M-x S+3
+
+         ## Dump an existing S object my.function into a buffer to work with
+         C-c C-d my.function
+         ## a new buffer named yourloginname.my.function.S will be created with
+         ## an editable copy of the object.  The buffer is associated with the
+         ## pathname /tmp/yourloginname.my.function.S and will amlost certainly not
+         ## exist after you log off.
+
+         ## enter program, functions, and code into work buffer, and send
+         ## entire contents to S-PLUS when ready
+         C-c C-b
+
+         ## Go to *S+3:1* buffer, which is the process buffer, and examine
+         ## the results.
+         C-c C-y
+         ## The sequence C-c C-y is a shortcut for:  C-x b *S+3:1*
+
+         ## Return to the work buffer (may/may not be prefixed)
+         C-x C-b yourloginname.my.function.S
+         ## Fix the function that didn't work, and resubmit by placing the
+         ## cursor somewhere in the function and
+         C-c C-f
+         ## Or you could've selected a region (using the mouse, or keyboard
+         ## via setting point/mark) and
+         C-c C-r
+         ## Or you could step through, line by line, using
+         C-c C-n
+         ## Or just send a single line (without moving to the next) using
+         C-c C-j
+         ## To fix that error in syntax for the "rchisq" command, get help
+         ## by
+         C-c C-v rchisq
+
+
+     4:    Data Analysis (S object is real)
+         ## Start up S-PLUS 3.x, in a process buffer (this will be *S+3:1*)
+         M-x S+3
+
+         ## Work in the process buffer.  When you find an object that needs
+         ## to be changed (this could be a data frame, or a variable, or a
+         ## function), dump it to a buffer:
+         C-c C-d my.cool.function
+
+         ## Edit the function as appropriate, and dump back in to the
+         ## process buffer
+         C-c C-b
+
+         ## Return to the S-PLUS process buffer
+         C-c C-y
+         ## Continue working.
+
+         ## When you need help, use
+         C-c C-v rchisq
+         ## instead of entering:   help("rchisq")
+
+
+File: ess.info,  Node: Customization Examples and Solutions to Problems,  Prev: Scenarios for use (possibilities--based on actual usage),  Up: ESS for S
+
+12.6 Customization Examples and Solutions to Problems
+=====================================================
+
+1. Suppose that you are primarily an SPLUS 3.4 user, occasionally
+using S version 4, and sick and tired of the buffer-name *S+3*    we've
+stuck you with.  Simply edit the "ess-dialect" alist entry in    the
+ess-sp3-d.el and ess-s4-d.el files to be "S" instead of "S4" and
+"S+3".  This will ensure that all the inferior process buffer names
+are "*S*".
+
+   2. Suppose that you WANT to have the first buffer name indexed by
+":1", in the same manner as your S-PLUS processes 2,3,4, and 5 (for
+you heavy simulation people).  Then    add after your (require
+'ess-site) or (load "ess-site") command     in your .emacs file, the
+line:
+     (setq ess-plain-first-buffername nil)
+
+   3. Fontlocking sometimes fails to behave nicely upon errors.  When
+Splus dumps, a mis-matched "  (double-quote) can result in the    wrong
+font-lock face being used for the remainder of the buffer.
+
+   Solution: add a " at the end of the "Dumped..." statement, to
+revert the font-lock face back to normal.
+
+   4. When you change directory within a *R* or *S* session using the
+setwd() command, emacs does not recognise that you have changed the
+current directory.
+
+   Solution: Use `M-x ess-change-directory'.  This will prompt you for
+the directory to change to.  It will then change directory within the
+*S* buffer, and also update the emacs variable `default-directory'.
+Alternatively, if you have already executed setwd(), press `M-RET'
+within the *S* buffer so that Emacs can update `default-directory'.
+
+
+File: ess.info,  Node: ESS for SAS,  Next: ESS for BUGS,  Prev: ESS for S,  Up: Top
 
 13 ESS for SAS
 **************
@@ -5946,14 +6199,13 @@ Concept Index
 
 * .emacs file:                           Source Directories.  (line  30)
 * aborting S commands:                   Other.               (line  10)
-* aborting the ESS process:              Other.               (line  18)
 * arguments to S program:                Customizing startup. (line  47)
 * authors:                               Credits.             (line   6)
 * auto-complete:                         Auto-complete.       (line   6)
 * autosaving:                            Source Files.        (line  82)
 * Bug reports:                           Reporting Bugs.      (line   6)
 * bugs:                                  Bugs.                (line   6)
-* cleaning up:                           Hot keys.            (line  66)
+* cleaning up:                           Hot keys.            (line  64)
 * comint:                                Credits.             (line   6)
 * command history:                       Command History.     (line   6)
 * command line arguments:                iESS(S)--Inferior ESS processes.
@@ -5975,7 +6227,7 @@ Concept Index
 * customization:                         Customization.       (line   6)
 * data frames:                           Object names.        (line  19)
 * debugging S functions:                 Evaluating code.     (line  63)
-* deleting output:                       Last command.        (line  32)
+* deleting output:                       Last command.        (line  28)
 * directories:                           Starting up.         (line  12)
 * dump file directories:                 Source Directories.  (line  20)
 * dump file names:                       Source Directories.  (line   6)
@@ -6004,7 +6256,7 @@ Concept Index
 * help files:                            Help.                (line   6)
 * highlighting:                          Highlighting.        (line   7)
 * historic backups:                      Source Files.        (line  40)
-* hot keys:                              Hot keys.            (line  37)
+* hot keys:                              Hot keys.            (line  35)
 * IDO completions:                       Minibufer completion.
                                                               (line   6)
 * indenting:                             Indenting.           (line  33)
@@ -6012,9 +6264,9 @@ Concept Index
 * interactive use of S:                  Introduction.        (line  31)
 * interrupting S commands:               Other.               (line  10)
 * introduction:                          Introduction.        (line   6)
-* keyboard short cuts:                   Hot keys.            (line  37)
-* killing temporary buffers:             Hot keys.            (line  66)
-* killing the ESS process:               Hot keys.            (line  61)
+* keyboard short cuts:                   Hot keys.            (line  35)
+* killing temporary buffers:             Hot keys.            (line  64)
+* killing the ESS process:               Hot keys.            (line  59)
 * lists, completion on:                  Object names.        (line  38)
 * motion in transcript mode:             Transcript Mode.     (line  17)
 * multi-line commands, resubmitting:     Transcript resubmit. (line  45)
@@ -6031,9 +6283,9 @@ Concept Index
                                                               (line   7)
 * programming in S:                      Introduction.        (line  43)
 * project work in S:                     Source Files.        (line  40)
-* quitting from ESS:                     Hot keys.            (line  61)
+* quitting from ESS:                     Hot keys.            (line  59)
 * re-executing commands:                 Command History.     (line   6)
-* reading long command outputs:          Last command.        (line  23)
+* reading long command outputs:          Last command.        (line  19)
 * Remote Computers:                      ESS processes on Remote Computers.
                                                               (line   6)
 * reverting function definitions:        Edit buffer.         (line  27)
@@ -6050,7 +6302,7 @@ Concept Index
                                                               (line   6)
 * tcsh:                                  Object names.        (line  14)
 * temporary buffers:                     Help.                (line 160)
-* temporary buffers, killing:            Hot keys.            (line  66)
+* temporary buffers, killing:            Hot keys.            (line  64)
 * transcript:                            Transcript.          (line   9)
 * transcript file:                       Customizing startup. (line  35)
 * transcript file names:                 Saving transcripts.  (line  13)
@@ -6074,7 +6326,7 @@ Variable and command index
 * ac-source-R:                           Auto-complete.       (line   6)
 * ac-source-R-args:                      Auto-complete.       (line   6)
 * ac-source-R-objects:                   Auto-complete.       (line   6)
-* attach():                              Hot keys.            (line  45)
+* attach():                              Hot keys.            (line  43)
 * backward-kill-word:                    Command-line editing.
                                                               (line  22)
 * comint-backward-matching-input:        Process buffer motion.
@@ -6091,7 +6343,7 @@ Variable and command index
 * comint-interrupt-subjob:               Other.               (line   9)
 * comint-kill-input:                     Command-line editing.
                                                               (line  26)
-* comint-kill-output:                    Last command.        (line  32)
+* comint-kill-output:                    Last command.        (line  28)
 * comint-next-input <1>:                 Command History.     (line  17)
 * comint-next-input:                     Process buffer motion.
                                                               (line  14)
@@ -6100,12 +6352,9 @@ Variable and command index
 * comint-previous-input:                 Process buffer motion.
                                                               (line  11)
 * comint-previous-matching-input-from-input: Command History. (line  40)
-* comint-show-maximum-output:            Last command.        (line  16)
-* comint-show-output:                    Last command.        (line  25)
-* comint-stop-subjob:                    Other.               (line  13)
+* comint-show-output:                    Last command.        (line  21)
 * comment-column:                        Indenting.           (line  25)
 * dump():                                Edit buffer.         (line  35)
-* ess-abort:                             Other.               (line  13)
 * ess-ask-about-display:                 X11.                 (line  11)
 * ess-ask-about-transfile <1>:           Saving transcripts.  (line  12)
 * ess-ask-about-transfile:               Customizing startup. (line  32)
@@ -6114,14 +6363,13 @@ Variable and command index
                                                               (line   9)
 * ess-change-directory:                  Rutils.              (line  45)
 * ess-cleanup <1>:                       Help.                (line 160)
-* ess-cleanup:                           Hot keys.            (line  66)
+* ess-cleanup:                           Hot keys.            (line  64)
 * ess-delete-dump-files:                 Source Files.        (line  13)
 * ess-describe-help-mode:                Help.                (line  21)
 * ess-directory:                         Source Directories.  (line  48)
 * ess-display-help-on-object:            Help.                (line   8)
 * ess-dump-filename-template:            Source Directories.  (line  10)
-* ess-dump-object-into-edit-buffer <1>:  Edit buffer.         (line   9)
-* ess-dump-object-into-edit-buffer:      Other.               (line  21)
+* ess-dump-object-into-edit-buffer:      Edit buffer.         (line   9)
 * ESS-elsewhere:                         ESS processes on Remote Computers.
                                                               (line   6)
 * ess-end-of-function:                   Other edit buffer commands.
@@ -6140,11 +6388,9 @@ Variable and command index
 * ess-eval-region-or-function-or-paragraph-and-step: Evaluating code.
                                                               (line  33)
 * ess-eval-region-or-line-and-step:      Evaluating code.     (line  26)
-* ess-eval-visibly-p:                    Evaluating code.     (line  13)
-* ess-execute:                           Hot keys.            (line  30)
-* ess-execute-attach:                    Hot keys.            (line  44)
+* ess-eval-visibly:                      Evaluating code.     (line  13)
+* ess-execute-attach:                    Hot keys.            (line  42)
 * ess-execute-in-process-buffer:         Hot keys.            (line  12)
-* ess-execute-in-tb:                     Evaluating code.     (line  76)
 * ess-execute-objects:                   Hot keys.            (line  21)
 * ess-execute-search:                    Hot keys.            (line  27)
 * ess-fancy-comments:                    Indenting.           (line  28)
@@ -6154,11 +6400,10 @@ Variable and command index
 * ess-keep-dump-files:                   Source Files.        (line  27)
 * ess-list-object-completions:           Object names.        (line  34)
 * ess-load-file <1>:                     Loading.             (line  13)
-* ess-load-file:                         Hot keys.            (line  51)
+* ess-load-file:                         Hot keys.            (line  49)
 * ess-parse-errors <1>:                  Error Checking.      (line   9)
-* ess-parse-errors:                      Hot keys.            (line  53)
-* ess-quit <1>:                          Help.                (line 160)
-* ess-quit:                              Other.               (line  18)
+* ess-parse-errors:                      Hot keys.            (line  51)
+* ess-quit:                              Help.                (line 160)
 * ess-R-complete-object-name:            Roxygen.             (line  77)
 * ess-R-mode-font-lock-keywords:         Highlighting.        (line  27)
 * ess-remote:                            ESS processes on Remote Computers.
@@ -6205,7 +6450,7 @@ Variable and command index
 * ess-transcript-send-command-and-move:  Transcript resubmit. (line  22)
 * ess-use-ido, ess-completing-read:      Minibufer completion.
                                                               (line   6)
-* exit():                                Hot keys.            (line  61)
+* exit():                                Hot keys.            (line  59)
 * fill-paragraph:                        Roxygen.             (line  89)
 * inferior-ess-program:                  Customizing startup. (line  44)
 * inferior-ess-R-font-lock-keywords:     Highlighting.        (line  20)
@@ -6217,7 +6462,7 @@ Variable and command index
 * newline-and-indent:                    Roxygen.             (line  96)
 * objects():                             Hot keys.            (line  21)
 * printer():                             printer.             (line  11)
-* q():                                   Hot keys.            (line  61)
+* q():                                   Hot keys.            (line  59)
 * S:                                     Starting up.         (line  12)
 * S+elsewhere:                           ESS processes on Remote Computers.
                                                               (line   6)
@@ -6232,110 +6477,113 @@ Variable and command index
 
 Tag Table:
 Node: Top278
-Node: Introduction2359
-Node: Features5341
-Node: New features8762
-Node: Credits71001
-Node: Latest version74531
-Node: Manual76571
-Node: Installation79113
-Node: Unix installation79585
-Node: Microsoft Windows installation83940
-Node: Requirements93599
-Node: ESS for S94359
-Node: ESS(S)--Editing files94802
-Node: iESS(S)--Inferior ESS processes95932
-Node: ESS-help--assistance with viewing help101612
-Node: Philosophies for using ESS(S)101931
-Node: Scenarios for use (possibilities--based on actual usage)103056
-Node: Customization Examples and Solutions to Problems107736
-Node: Interactive ESS109483
-Node: Starting up110334
-Node: Multiple ESS processes111145
-Node: ESS processes on Remote Computers112180
-Node: S+elsewhere and ESS-elsewhere115335
-Node: Customizing startup118098
-Node: Entering commands120778
-Node: Command-line editing121946
-Node: Transcript123230
-Node: Last command125007
-Node: Process buffer motion126508
-Node: Transcript resubmit128029
-Node: Saving transcripts130638
-Node: Command History132684
-Node: Saving History136159
-Node: History expansion136980
-Node: Hot keys140188
-Node: Statistical Process running in ESS?143655
-Node: Emacsclient144960
-Node: Other145767
-Node: Evaluating code146819
-Node: Transcript Mode150694
-Node: Resubmit151843
-Node: Clean152927
-Node: Editing objects153646
-Node: Edit buffer154767
-Node: Loading156817
-Node: Error Checking157876
-Node: Indenting158924
-Node: Styles162080
-Node: Other edit buffer commands163577
-Node: Source Files165275
-Node: Source Directories169813
-Node: Help172960
-Node: Completion177553
-Node: Object names177763
-Node: Function arguments180502
-Node: Minibufer completion181040
-Node: Auto-complete181536
-Node: Developing with ESS183112
-Node: ESS tracebug183550
-Node: Editing documentation186475
-Node: R documentation files187016
-Node: Roxygen190921
-Node: ESS developer195134
-Node: Extras199924
-Node: ESS ElDoc200924
-Node: Handy commands202214
-Node: Highlighting203160
-Node: Parens204569
-Node: Graphics205150
-Node: printer205659
-Node: X11206432
-Node: winjava206963
-Node: Imenu207376
-Node: Toolbar208217
-Node: TAGS208625
-Node: Rdired209977
-Node: Rutils211241
-Node: Org213556
-Node: Sweave and AUCTeX214499
-Node: ESS for SAS216288
-Node: ESS(SAS)--Design philosophy217012
-Node: ESS(SAS)--Editing files217966
-Node: ESS(SAS)--TAB key219826
-Node: ESS(SAS)--Batch SAS processes221191
-Node: ESS(SAS)--Function keys for batch processing226215
-Node: iESS(SAS)--Interactive SAS processes235835
-Node: iESS(SAS)--Common problems239585
-Node: ESS(SAS)--Graphics241117
-Node: ESS(SAS)--Windows241900
-Node: ESS for BUGS242479
-Node: ESS(BUGS)--Model files243500
-Node: ESS(BUGS)--Command files244280
-Node: ESS(BUGS)--Log files244825
-Node: ESS for JAGS245162
-Node: ESS(JAGS)--Model files246153
-Node: ESS(JAGS)--Command files248586
-Node: ESS(JAGS)--Log files249362
-Node: Mailing lists/bug reports249658
-Node: Bugs249922
-Node: Reporting Bugs251585
-Node: Mailing Lists252398
-Node: Help with emacs253163
-Node: Customization253717
-Node: Key Index254482
-Node: Concept Index254637
-Node: Variable and command index263301
+Node: Introduction2360
+Node: Features5342
+Node: Current Features5997
+Node: New features10404
+Node: Credits79934
+Node: Latest version83464
+Node: Manual85504
+Node: Installation88046
+Node: Unix installation88575
+Node: Microsoft Windows installation93015
+Node: License102672
+Node: Stability103341
+Node: Requirements103837
+Node: Interactive ESS104630
+Node: Starting up105484
+Node: Multiple ESS processes106295
+Node: ESS processes on Remote Computers107330
+Node: S+elsewhere and ESS-elsewhere110485
+Node: Customizing startup113248
+Node: Entering commands115928
+Node: Command-line editing117096
+Node: Transcript118380
+Node: Last command120157
+Node: Process buffer motion121527
+Node: Transcript resubmit123048
+Node: Saving transcripts125657
+Node: Command History127703
+Node: Saving History131178
+Node: History expansion131998
+Node: Hot keys135206
+Node: Statistical Process running in ESS?138590
+Node: Emacsclient139895
+Node: Other140702
+Node: Evaluating code141504
+Node: Transcript Mode145178
+Node: Resubmit146327
+Node: Clean147411
+Node: Editing objects148130
+Node: Edit buffer149251
+Node: Loading151313
+Node: Error Checking152379
+Node: Indenting153427
+Node: Styles156583
+Node: Other edit buffer commands158080
+Node: Source Files159782
+Node: Source Directories164347
+Node: Help167494
+Node: Completion172087
+Node: Object names172295
+Node: Function arguments175032
+Node: Minibufer completion175568
+Node: Auto-complete176062
+Node: Developing with ESS177591
+Node: ESS tracebug178029
+Node: Editing documentation180947
+Node: R documentation files181488
+Node: Roxygen185393
+Node: ESS developer189610
+Node: Extras194415
+Node: ESS ElDoc195399
+Node: Handy commands196689
+Node: Highlighting197635
+Node: Parens199044
+Node: Graphics199625
+Node: printer200134
+Node: X11200907
+Node: winjava201438
+Node: Imenu201851
+Node: Toolbar202692
+Node: TAGS203100
+Node: Rdired204452
+Node: Rutils205504
+Node: Org207819
+Node: Sweave and AUCTeX208762
+Node: ESS for S210551
+Node: ESS(S)--Editing files210986
+Node: iESS(S)--Inferior ESS processes212118
+Node: ESS-help--assistance with viewing help217800
+Node: Philosophies for using ESS(S)218121
+Node: Scenarios for use (possibilities--based on actual usage)219248
+Node: Customization Examples and Solutions to Problems223930
+Node: ESS for SAS225679
+Node: ESS(SAS)--Design philosophy226406
+Node: ESS(SAS)--Editing files227360
+Node: ESS(SAS)--TAB key229220
+Node: ESS(SAS)--Batch SAS processes230585
+Node: ESS(SAS)--Function keys for batch processing235609
+Node: iESS(SAS)--Interactive SAS processes245229
+Node: iESS(SAS)--Common problems248979
+Node: ESS(SAS)--Graphics250511
+Node: ESS(SAS)--Windows251294
+Node: ESS for BUGS251873
+Node: ESS(BUGS)--Model files252894
+Node: ESS(BUGS)--Command files253674
+Node: ESS(BUGS)--Log files254219
+Node: ESS for JAGS254556
+Node: ESS(JAGS)--Model files255547
+Node: ESS(JAGS)--Command files257980
+Node: ESS(JAGS)--Log files258756
+Node: Mailing lists/bug reports259052
+Node: Bugs259316
+Node: Reporting Bugs260979
+Node: Mailing Lists261792
+Node: Help with emacs262557
+Node: Customization263111
+Node: Key Index263876
+Node: Concept Index264031
+Node: Variable and command index272622
 
 End Tag Table

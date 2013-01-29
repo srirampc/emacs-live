@@ -38,7 +38,7 @@
 
 (require 'ess-sta-l)
 
-(defvar STA-dialect-name "Stata"
+(defvar STA-dialect-name "stata"
   "Name of 'dialect' for Stata.");easily changeable in a user's .emacs
 
 (defvar STA-customize-alist
@@ -53,6 +53,7 @@
     (ess-help-sec-keys-alist       . ess-help-STA-sec-keys-alist)
     (ess-loop-timeout              . 500000 )
     (ess-object-name-db-file       . "ess-sta-namedb.el" )
+    (ess-help-web-search-command   . "http://www.stata.com/search/?q=%s&restrict=&btnG=Search&client=stata&num=&output=xml_no_dtd&site=stata&ie=&oe=UTF-8&sort=&proxystylesheet=stata")
     (inferior-ess-font-lock-defaults . ess-STA-mode-font-lock-defaults)
     (inferior-ess-program          . inferior-STA-program-name)
     (inferior-ess-objects-command  . "describe\n")

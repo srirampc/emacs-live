@@ -58,6 +58,7 @@
     (modify-syntax-entry ?$  "_"  S-syntax-table); foo$comp = 1 symbol(completion)
     (modify-syntax-entry ?@  "_"  S-syntax-table); foo@slot = 1 symbol(completion)
     (modify-syntax-entry ?_  "_"  S-syntax-table)
+    (modify-syntax-entry ?:  "_"  S-syntax-table)
     (modify-syntax-entry ?*  "."  S-syntax-table)
     (modify-syntax-entry ?<  "."  S-syntax-table)
     (modify-syntax-entry ?>  "."  S-syntax-table)
@@ -121,19 +122,22 @@
     ;; these prompt are the same for all S-languages As long as custom prompt
     ;; ends in inferior-ess-primary-prompt everything should work as expected.
     (inferior-ess-primary-prompt   . "> ")
-    (inferior-ess-secondary-prompt . "+ ")
+    ;; (inferior-ess-secondary-prompt . "[+:] ") ;; catch Selection: and alike
+    (inferior-ess-secondary-prompt . "+ ") ;; catch Selection: and alike
     (comment-start                . "#")
+    (ess-imenu-generic-expression  . ess-imenu-S-generic-expression)
     (comment-add                  . 1)
     (comment-start-skip           . "#+ *")
-    (comment-use-syntax           . nil) ;; regexp based, probably faster than syntax based 
+    (comment-use-syntax           . nil) ;; regexp based, probably faster than syntax based
     (comment-column               . 40)
     (ess-no-skip-regexp           . (concat "^ *@\\|" (default-value 'ess-no-skip-regexp)))
-    ;; inferior-ess-prompt is used by comint for navigation only if
-    ;; comint-use-prompt-regexp is t transcript-mode also relies on this regexp
+    ;; inferior-ess-prompt is used by comint for navigation, only if
+    ;; comint-use-prompt-regexp is t; (transcript-mode also relies on this regexp)
     (inferior-ess-prompt           . inferior-S-prompt) ;customizable
     (ess-get-help-topics-function  . 'ess-get-S-help-topics-function)
     (ess-getwd-command          . "getwd()\n")
     (ess-setwd-command          . "setwd('%s')\n")
+    (ess-funargs-command        . ".ess.funargs(%s)\n")
     )
   "S-language common settings for all <dialect>-customize-alist s"
   )
@@ -161,6 +165,7 @@
      (ess-syntax-error-re
       . "\\(Syntax error: .*\\) at line \\([0-9]*\\), file \\(.*\\)$")
      (inferior-ess-objects-command  . inferior-Splus-objects-command)
+     (ess-describe-object-at-point-commands . 'ess-S-describe-object-at-point-commands)
      (inferior-ess-font-lock-keywords . 'inferior-S-font-lock-keywords)
      (ess-editor . S-editor)
      (ess-pager  . S-pager)
@@ -684,7 +689,10 @@ an underscore is always inserted. "
     (ignore-errors
       (when (and (eq major-mode 'inferior-ess-mode)
                  (> (point) (process-mark (get-buffer-process (current-buffer)))))
-        (narrow-to-region (process-mark (get-ess-process)) (point-max))))
+        (narrow-to-region (process-mark (get-ess-process)) (point-max)))
+      (and ess-noweb-mode
+           (ess-noweb-in-code-chunk)
+           (ess-noweb-narrow-to-chunk)))
     (if (or
          (ess-inside-string-or-comment-p (point))
          (not (equal ess-language "S")))
@@ -746,9 +754,10 @@ In that case, the it is removed and replaced by the underscore.
   (define-key ess-mode-map          "\C-cf" 'ess-insert-function-outline)
   (define-key inferior-ess-mode-map "\C-cw" 'ess-execute-screen-options)
 
-  ;; Make A-- : [Alt] + [-] (in addition to / instead of  "_" = (on US-keyboard) [Shift]+ [-]
-  (define-key ess-mode-map          [?\A--] 'ess-insert-S-assign)
-  (define-key inferior-ess-mode-map [?\A--] 'ess-insert-S-assign)
+  ;; Make M-- : [Alt] + [-] (in addition to / instead of  "_" = (on US-keyboard) [Shift]+ [-]
+  ;; Note this overwrites 'M--' as "negative argument" (still on 'C--'):
+  (define-key ess-mode-map          [?\M--] 'ess-insert-S-assign)
+  (define-key inferior-ess-mode-map [?\M--] 'ess-insert-S-assign)
   )
 
 
@@ -783,6 +792,68 @@ and I need to relearn emacs lisp (but I had to, anyway."
             (when (string= ess-language "S");; <- is this needed at all here?
               (local-set-key "\M-\r" 'ess-use-this-dir))
             ))
+
+
+
+;;; S imenu support
+
+;; don't use syntax classes, bad for etags
+(defvar ess-imenu-S-generic-expression
+  '(("Functions" "^\\(.+\\)[ \t\n]*<-[ \t\n]*function[ ]*(" 1)
+    ("Classes" "^.*setClass(\\(.*\\)," 1)
+    ("Coercions" "^.*setAs(\\([^,]+,[^,]*\\)," 1) ; show from and to
+    ("Generics" "^.*setGeneric(\\([^,]*\\)," 1)
+    ("Methods" "^.*set\\(Group\\|Replace\\)?Method(\"\\(.+\\)\"," 2)
+    ;;[ ]*\\(signature=\\)?(\\(.*,?\\)*\\)," 1)
+    ;;
+    ;;("Other" "^\\(.+\\)\\s-*<-[ \t\n]*[^\\(function\\|read\\|.*data\.frame\\)]" 1)
+    ("Package" "^.*\\(library\\|require\\)(\\(.*\\)" 2)
+    ("Data" "^\\(.+\\)[ \t\n]-*<-[ \t\n]*\\(read\\|.*data\.frame\\).*(" 1)))
+
+(defun ess-imenu-S (&optional arg)
+  "S Language Imenu support for ESS."
+  (interactive)
+  (setq imenu-generic-expression ess-imenu-generic-expression)
+  (imenu-add-to-menubar "Imenu-S"))
+
+(defalias 'ess-imenu-R 'ess-imenu-S)
+
+
+ ;;; Speedbar stuff.
+(defun ess-S-initialize-speedbar ()
+  "Extend to all extensions; see initialization, and edit."
+  (speedbar-add-supported-extension ".R")
+  (speedbar-add-supported-extension ".S")
+  (speedbar-add-supported-extension ".s")
+  (speedbar-add-supported-extension ".q"))
+
+                                        ;(if (featurep 'speedbar)
+                                        ;    (progn
+                                        ;      (message "enabling speedbar support")
+                                        ;      (require 'speedbar)
+                                        ;      (ess-S-initialize-speedbar)))
+
+(eval-when-compile
+  (condition-case nil
+      (progn
+        (require 'speedbar)
+        (when (featurep 'speedbar)
+          (message "enabling speedbar support")
+
+          (defun S-speedbar-buttons (buffer)
+            "attempted hack."
+
+            ;;(speedbar-make-tag-line)
+            ;;(speedbar-insert-button)
+            (speedbar-with-writable))
+
+          (fset 'R-speedbar-buttons 'S-speedbar-buttons)
+
+          (defun S-speedbar-menu-items  ( )
+            "Need to write.")
+
+          (ess-S-initialize-speedbar)))
+    (error nil)))
 
 (provide 'ess-s-l)
 

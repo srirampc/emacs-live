@@ -128,7 +128,7 @@
   :prefix "ess-")
 ;; Variables (not user-changeable)
 
-(defvar ess-version "12.09" ;; updated by 'make'
+(defvar ess-version "12.09-2" ;; updated by 'make'
   "Version of ESS currently loaded.")
 
 (defvar ess-revision nil ;; set
@@ -172,6 +172,16 @@ as `ess-imenu-use-S'."
   :group 'ess
   :type  'boolean)
 
+(defcustom ess-imenu-use-S ess-imenu-use-p
+  "*Non-nil means include an Imenu menu item in S buffers."
+  :group 'ess
+  :type  'boolean)
+
+(defvar ess-imenu-generic-expression nil
+  "Placeholder for imenu-generic-expression. Dialect specific.")
+
+
+
 ;;
 
 (defcustom ess-handy-commands '(("change-directory"     . ess-change-directory)
@@ -191,6 +201,44 @@ as `ess-imenu-use-S'."
 `ess-handy-commands' and `ess-smart-comma' function."
   :group 'ess
   :type (if (featurep 'emacs) 'alist 'list))
+
+(defvar ess--local-handy-commands nil
+  "Store handy commands locally")
+(make-variable-buffer-local 'ess--local-handy-commands)
+
+
+
+(defcustom ess-describe-at-point-method nil
+  "Whehter `ess-describe-object-at-point' should use a tooltip.
+If nil display in an electric buffer. If 'tooltip display in
+a tooltip.
+
+See also `tooltip-hide-delay' and `tooltip-delay'.
+ "
+  :group 'ess-utils
+  :type '(choice (const :tag "buffer" :value nil ) (const tooltip))
+  )
+
+(defcustom ess-R-describe-object-at-point-commands
+  '(("str(%s)")
+    ("head(%s, n = 40)")
+    ("tail(%s, n = 40)")
+    ("summary(%s)"))
+  "A list of commands cycled by `ess-describe-object-at-point'.
+%s is substituted with the name at point. The value of the
+ aliment is not used as yet and has no effect."
+  :group 'R
+  :type 'alist)
+
+
+(defcustom ess-S-describe-object-at-point-commands
+  ess-R-describe-object-at-point-commands
+  "An alist of commands cycled by `ess-describe-object-at-point'.
+%s is substitute with the name at point. The value is not used as
+ yet."
+  :group 'S+
+  :type 'alist)
+
 
 (defcustom ess-can-eval-in-background nil
   "If non-nil ESS can perform caching and other background
@@ -228,17 +276,17 @@ See also `ess-blink-delay'"
   :group 'ess
   :type 'boolean)
 
-(defcustom ess-language nil
+(defvar ess-language nil
   "Prefix of all ESS processes, and defines the dialect in use.
 Currently acceptable values are `S',  `XLS', `SAS'.
 Can be changed, e.g., to `R'.  Use `setq-default' if setting it in
-.emacs (also see ess-site.el)."
-  :group 'ess
-  :type '(choice (const :tag "Initial" :value nil)
-                 (const :tag "S"       :value "S")
-                 (const :tag "XLS"     :value "XLS")
-                 (const :tag "SAS"     :value "SAS")
-                 (const :tag "R"       :value "R")))
+.emacs (also see ess-site.el).")
+  ;; :group 'ess
+  ;; :type '(choice (const :tag "Initial" :value nil)
+  ;;                (const :tag "S"       :value "S")
+  ;;                (const :tag "XLS"     :value "XLS")
+  ;;                (const :tag "SAS"     :value "SAS")
+  ;;                (const :tag "R"       :value "R")))
 
 (make-variable-buffer-local 'ess-language)
 
@@ -249,7 +297,7 @@ version of the statistical package being executed in the particular
 buffer.
 
 Current values could include:
-for `ess-dialect' = S3, S4, Sp3, Sp4, Sp5, Sp6, R, XLS, SAS, STA
+for `ess-dialect' = S3, S4, Sp3, Sp4, Sp5, S+, R, XLS, SAS, Stata, Julia
 
 Used to adjust for changes in versions of the program.")
 
@@ -415,6 +463,12 @@ to install your custom sources.
 "
   :group 'ess-extras
   :type '(choice (const t) (const script-only) (const nil)))
+
+
+(defcustom ess-ac-R-argument-suffix " = "
+  "Suffix appended by `ac-source-R' and `ac-source-R-args' to candidates."
+  :group 'R
+  :type 'string)
 
 (defcustom ess-use-tracebug nil
   "If t, load ess-tracebug when R process starts."
@@ -790,8 +844,8 @@ other users if you are using a shared directory. Other alternatives:
 \"%s.S\" ; Don't bother uniquifying if using your own directory(ies)
 \"dumpdir\"; Always dump to a specific filename. This makes it impossible
 to edit more than one object at a time, though.
-(make-temp-name \"scr.\") ; Another way to uniquify"
-;; MM: The last 3-4 lines above suck (I don't understand them) -- FIXME --
+ (make-temp-name \"scr.\") ; Another way to uniquify"
+  ;; MM: The last 3-4 lines above suck (I don't understand them) -- FIXME --
 
 :group 'ess-edit
 :type 'string)
@@ -862,9 +916,10 @@ Good for evaluating ESS code."
 
 (defcustom ess-pdf-viewer-pref nil
   "External pdf viewer you like to use from ESS.
-If nil, will use  getOption(\"pdfviewer\") in R, and try finding one
-from a list."
-  :type '(choice (const nil) string)
+Can be a string giving a name of the program or a list with car
+giving heprogram and the tail giving the arguments. For example
+'(\"okular\" \"--unique\")."
+  :type '(choice (const nil) (repeat :tag "Command with arguments" string) (string :tag "Command"))
   :group 'ess)
 
 (defcustom ess-ps-viewer-pref nil
@@ -937,7 +992,14 @@ syntactically correct roxygen entries)"
                  (const :tag "On" t)))
 
 (defcustom ess-roxy-str "##'"
-  "Prefix string to insert before each line in a roxygen block."
+  "Prefix string to insert before each line in new roxygen
+blocks. In existing roxygen blocks, the prefix is taken from
+the line at point"
+  :group 'ess-roxy
+  :type 'string)
+
+(defcustom ess-roxy-re "^#+'"
+  "Regular expression to recognize roxygen blocks."
   :group 'ess-roxy
   :type 'string)
 
@@ -961,7 +1023,31 @@ to sweave the current noweb file and latex the result."
 (defvar ess-local-process-name nil
   "The name of the ESS process associated with the current buffer.")
 (put 'ess-local-process-name 'risky-local-variable t)
+(put 'ess-local-process-name 'permanent-local t)
 (make-variable-buffer-local 'ess-local-process-name)
+
+(defcustom ess-switch-to-end-of-proc-buffer t
+  "If t, `ess-switch-to-inferior-or-script-buffer goes to end of
+process buffer."
+  :group 'ess
+  :type 'boolean)
+
+(defcustom ess-gen-proc-buffer-name-function 'ess-gen-proc-buffer-name:simple
+  "Function used for generation of the buffer name of the newly created ESS process.
+It should accept one argument PROC-NAME, a string specifying
+internal process name (R, R:2, etc).
+
+Provided default options are:
+
+  `ess-gen-proc-buffer-name:simple' -- *proc*
+  `ess-gen-proc-buffer-name:directory' -- *proc:dir*
+  `ess-gen-proc-buffer-name:abbr-long-directory' -- *proc:abbr-long-dir*
+"
+  :group 'ess
+  :type '(choice (const :tag "*proc*" ess-gen-proc-buffer-name:simple)
+                 (const :tag "*proc:dir*" ess-gen-proc-buffer-name:directory)
+                 (const :tag "*proc:abbr-long-dir*" ess-gen-proc-buffer-name:abbr-long-directory)
+                 function))
 
 
 (defcustom ess-kermit-command "gkermit -T"
@@ -1000,9 +1086,6 @@ by `ess-function-template'."
   :group 'ess
   :type 'regexp)
 
-;;;; This is tested for S dialects (actually only for R) -- be careful with it!
-(defvar ess-help-arg-regexp "\\(['\"]?\\)\\([^,=)'\"]*\\)\\1"
-  "Reg(ular) Ex(pression) of help(.) arguments.  MUST: 2nd \\(.\\) = arg.")
 
  ; ess-inf: variables for inferior-ess.
 
@@ -1047,6 +1130,15 @@ These arguments are currently not passed to other versions of R that have
 been created using the variable `ess-r-versions'."
   :group 'ess-R
   :type 'string)
+
+(defcustom ess-R-readline nil
+  "nil indicates that \"--no-readline \" should be used as argument when starting R.
+This has been the default since 1998 and may very slightly speedup interaction.
+On the other hand, readline is necessary for expansion of \"~username/\" in paths.
+Note that readline interprets tabs (tabular characters) in R source files as asking
+for file name completion.  This can mess up ess evaluation completely."
+  :group 'ess-R
+  :type 'boolean)
 
 (defcustom inferior-STA-start-file nil
   "Initialization file for Stata."
@@ -1196,13 +1288,13 @@ Use double backslashes if you use the msdos shell."
   :group 'ess-SPLUS
   :type 'string)
 
-(defcustom inferior-S+4-print-command "S_PRINT_COMMAND=gnuclientw.exe"
+(defcustom inferior-S+4-print-command "S_PRINT_COMMAND=emacsclientw.exe"
   "Destination of print icon in S+4 Commands window."
   :group 'ess-SPLUS
   :type 'string)
 
 (defcustom inferior-S+4-editor-pager-command
-  "options(editor='gnuclient.exe', pager='gnuclientw.exe')"
+  "options(editor='emacsclient.exe', pager='emacsclientw.exe')"
   "Programs called by the editor() and pager() functions
 in S+4 Commands window and in Sqpe+4 buffer."
   :group 'ess-S
@@ -1261,10 +1353,18 @@ different computer."
   :group 'ess-SPLUS
   :type 'string)
 
+(defvaralias 'S+6-dialect-name 'S+-dialect-name)
+(defcustom S+-dialect-name "S+"
+  "Name of 'dialect' for S-PLUS 6.x and later.
+Easily changeable in a user's `.emacs'."
+  :group 'ess-SPLUS
+  :type 'string)
+
+(defvaralias 'inferior-S+6-program-name 'inferior-S+-program-name)
 (if ess-microsoft-p
-    (defcustom inferior-S+6-program-name
+    (defcustom inferior-S+-program-name
       (concat ess-program-files "/TIBCO/splus82/cmd/Splus.exe")
-      "Program name to invoke an external GUI S+6 for Windows.
+      "Program name to invoke an external GUI S+ for Windows.
 The default value is correct for a default installation of
 S-Plus 8.1 and with bash as the shell.
 For any other version or location, change this value in ess-site.el or
@@ -1272,16 +1372,29 @@ site-start.el.  Use the 8.3 version of the pathname.
 Use double backslashes if you use the msdos shell."
       :group 'ess-SPLUS
       :type 'string)
-  (defcustom inferior-S+6-program-name "Splus8"
-    "Program name to invoke an inferior ESS with S+6() for Unix."
+  (defcustom inferior-S+-program-name "Splus"
+    "Program name to invoke an inferior ESS with S+ for Unix."
     :group 'ess-SPLUS
     :type 'string))
 
-(defcustom inferior-Splus-args ""
+(defvaralias 'inferior-S+6-start-args 'inferior-S+-start-args)
+(defvaralias 'inferior-Splus-args 'inferior-S+-start-args)
+(defcustom inferior-S+-start-args ""
   "String of arguments used when starting S.
-These arguments are currently passed only to S+6."
+These arguments are currently passed only to S+6 and higher."
   :group 'ess-SPLUS
   :type 'string)
+
+
+(defvaralias 'inferior-Sqpe-start-args 'inferior-Sqpe+-start-args)
+(defcustom inferior-Sqpe+-start-args " "
+  "Default is empty.  Can be used for license manager information, for example
+`(setq inferior-Sqpe+-start-args \" S_ELMHOST=@123.456.789.012  ELMTIMEOUT=60 \")'."
+  ;; (setq inferior-Sqpe+-start-args " S_ELMHOST=@123.456.789.012  ELMTIMEOUT=60 ")  ;; use this line as the model for your site-start.el
+  :group 'ess-SPLUS
+  :type 'string
+  )
+
 
 (defcustom inferior-Splus-objects-command "objects(where=%d)\n"
   "Format string for R command to get a list of objects at position %d.
@@ -1289,27 +1402,32 @@ Used in e.g., \\[ess-execute-objects] or \\[ess-display-help-on-object]."
   :group 'ess-command
   :type 'string)
 
-(defcustom inferior-S+6-print-command "S_PRINT_COMMAND=gnuclientw.exe"
-  "Destination of print icon in S+6 for Windows Commands window."
+(defvaralias 'inferior-S+6-print-command 'inferior-S+-print-command)
+
+(defcustom inferior-S+-print-command "S_PRINT_COMMAND=emacsclientw.exe"
+  "Destination of print icon in S+ for Windows Commands window."
   :group 'ess-SPLUS
   :type 'string)
 
-(defcustom inferior-S+6-editor-pager-command
-  "options(editor='gnuclient.exe', pager='gnuclientw.exe')"
-  "Programs called by the editor() and pager() functions
-in S+6 for Windows Commands window and in Sqpe+6 for Windows buffer."
+(defvaralias 'inferior-S+6-editor-pager-command 'inferior-S+-editor-pager-command)
+(defcustom inferior-S+-editor-pager-command
+  "options(editor='emacsclient.exe', pager='emacsclientw.exe')"
+  "Programs called by the editor() and pager() functions in S+
+for Windows Commands window and in Sqpe+6 for Windows buffer."
   :group 'ess-SPLUS
   :type 'string)
 
-(defcustom inferior-Sqpe+6-program-name
+(defvaralias 'inferior-Sqpe+6-program-name 'inferior-Sqpe+-program-name)
+(defcustom inferior-Sqpe+-program-name
   (concat ess-program-files "/TIBCO/splus82/cmd/Sqpe.exe")
   "Program name for invoking an inferior ESS with Sqpe+6() for Windows."
   :group 'ess-S
   :type 'string)
 
-(defcustom inferior-Sqpe+6-SHOME-name
+(defvaralias 'inferior-Sqpe+6-SHOME-name 'inferior-Sqpe+-SHOME-name)
+(defcustom inferior-Sqpe+-SHOME-name
   (if ess-microsoft-p (concat ess-program-files "/TIBCO/splus82" ""))
-  "SHOME name for invoking an inferior ESS with Sqpe+6() for Windows.
+  "SHOME name for invoking an inferior ESS with Sqpe+6 and higher for Windows.
 The default value is correct for a default installation of
 S-Plus 8.1.  For any other version or location,
 change this value in ess-site.el or site-start.el.  Use the 8.3
@@ -1394,7 +1512,7 @@ order for it to work right.  And Emacs is too smart for it."
 ;;; S S-Plus R.
 
 (defcustom R-editor
-  (if ess-microsoft-p "gnuclient.exe"
+  (if ess-microsoft-p "emacsclient.exe"
     (if (equal system-type 'Apple-Macintosh) nil
       (if (featurep 'xemacs) "gnuclient" "emacsclient"))) ;; unix
   "Editor called by R process with 'edit()' command."
@@ -1410,7 +1528,7 @@ order for it to work right.  And Emacs is too smart for it."
 ;; FIXME:  For GNU emacs, "emacsclient" (without ".exe") also works on Windoze
 ;;   (if (>= emacs-major-version 22) "emacsclient" ; for all platforms
 (defcustom S-editor
-  (if ess-microsoft-p "gnuclient.exe"
+  (if ess-microsoft-p "emacsclient.exe"
     (if (equal system-type 'Apple-Macintosh) nil
       ;; unix:
       (if (featurep 'xemacs) "gnuclient" "emacsclient")))
@@ -1419,7 +1537,7 @@ order for it to work right.  And Emacs is too smart for it."
   :type 'string)
 
 (defcustom S-pager
-  (if ess-microsoft-p "gnuclientw.exe"
+  (if ess-microsoft-p "emacsclientw.exe"
     (if (equal system-type 'Apple-Macintosh) nil
       (if (featurep 'xemacs) "gnuclient" "emacsclient")))
   "Pager called by S process with 'page()' command."
@@ -1539,11 +1657,10 @@ Set to nil if language doesn't support secondary prompt.")
 
 ;; need to recognise  + + + > > >
 ;; and "+ . + " in tracebug prompt
-(defcustom inferior-S-prompt "[]a-zA-Z0-9.[]*\\([>+.] \\)*[+>] "
+(defcustom inferior-S-prompt "[]a-zA-Z0-9.[]*\\([>+.] \\)*> "
   "Regexp used in S and R inferior and transcript buffers for prompt navigation.
-
-You can set it to \"[]a-zA-Z0-9.[]*\\(> \\)+\" if you want to
-skip secondary prompt when invoking `comint-previous-prompt'.
+Customise it to make `comint-previous-prompt' quiqly navigate to
+interesting portions of the buffer.
  "
   :group 'ess-proc
   :type 'string)
@@ -1562,11 +1679,31 @@ Otherwise, they get their own temporary buffer."
   :group 'ess-proc
   :type 'boolean)
 
-(defcustom ess-eval-visibly-p t
+(defvaralias 'ess-eval-visibly-p 'ess-eval-visibly)
+
+(defcustom ess-eval-visibly t
   "Non-nil means ess-eval- commands display commands in the process buffer.
-Experienced users often change / customize it to 'nil'."
+If t, ESS waits after each line of the command for the process
+output. This results in a nice sequence of input and output but
+stalls emacs on long output (like Sys.sleep(5) in R).
+
+If 'nowait, ESS still shows the input commands, but don't wait
+for the process. Thus all the output is printed after the input
+lines.
+
+If nil, ESS doesn't print input commands and doesn't wait for the process.
+
+This variable also affect the evaluation of input code in
+iESS. The effect is similar to the above. If t then ess waits for
+the process output, otherwise not.
+"
   :group 'ess-proc
-  :type 'boolean)
+  :type '(choice (const t) (const nowait) (const nil)))
+
+;; (when (boundp 'ess-eval-visibly-p)
+;;   (setq ess-eval-visibly ess-eval-visibly-p))
+
+
 
 (defcustom ess-eval-deactivate-mark (fboundp 'deactivate-mark); was nil till 2010-03-22
   "Non-nil means that after ess-eval- commands the mark is deactivated,
@@ -1658,12 +1795,10 @@ Use second %s to substitute the dump file name."
   :group 'ess-command
   :type 'string)
 
-(defcustom inferior-ess-help-command "help(\"%s\")\n"
+(defvar inferior-ess-help-command "help(\"%s\")\n"
   "Format-string for building the ESS command to ask for help on an object.
 
-This format string should use %s to substitute an object name."
-  :group 'ess-command
-  :type 'string)
+This format string should use %s to substitute an object name.")
 
 (make-variable-buffer-local 'inferior-ess-help-command)
 (setq-default inferior-ess-help-command "help(\"%s\")\n")
@@ -1678,8 +1813,7 @@ If set, changes will take effect when next R session is started."
   :type 'string)
 
 (defvar ess-get-help-topics-function nil
-  "Dialect specific help topics retrival"
-  )
+  "Dialect specific help topics retrieval")
 (make-variable-buffer-local 'ess-get-help-topics-function)
 
 (defcustom inferior-ess-exit-command "q()\n"
@@ -1727,18 +1861,22 @@ Really set in <ess-lang>-customize-alist in ess[dl]-*.el")
 (defvar ess-cmd-delay nil
   "*Set to a positive number if ESS will include delays proportional to
 `ess-cmd-delay'  in some places. These delays are introduced to
-prevent timeouts in certain processes, such as completion.")
+prevent timeouts in certain processes, such as completion.
+
+This variable has no effect from ESS12.03
+")
 (make-variable-buffer-local 'ess-cmd-delay)
 
-(defcustom ess-R-cmd-delay nil
-  "Used to initialize `ess-cmd-delay'."
-  :group 'ess-command
-  :type '(choice (const nil) number))
+(defvar ess-R-cmd-delay nil
+  "Used to initialize `ess-cmd-delay'.
 
-(defcustom ess-S+-cmd-delay 1.0
-  "Used to initialize `ess-cmd-delay'."
-  :group 'ess-command
-  :type '(choice (const nil) number))
+This variable has no effect from ESS12.03
+")
+
+(defvar ess-S+-cmd-delay 1.0
+  "Used to initialize `ess-cmd-delay'.
+This variable has no effect from ESS12.03
+")
 
 ;;*;; Regular expressions
 (defvar inferior-ess-prompt nil
@@ -1757,24 +1895,17 @@ from `inferior-ess-primary-prompt' and
   "The regexp for matching the S/R/.. commands that change the search path.")
 (make-variable-buffer-local 'ess-change-sp-regexp)
 
-(defcustom ess-S+-change-sp-regexp
+(defvar ess-S+-change-sp-regexp
   "\\(attach(\\([^)]\\|$\\)\\|detach(\\|collection(\\|library(\\|module(\\|source(\\)"
-  "The regexp for matching the S-plus commands that change the search path."
-  :group 'ess-proc
-  :type 'regexp)
+  "The regexp for matching the S-plus commands that change the search path.")
 
-(defcustom ess-S-change-sp-regexp
+(defvar ess-S-change-sp-regexp
   "\\(attach(\\([^)]\\|$\\)\\|detach(\\|library(\\|source(\\)"
-  "The regexp for matching the S commands that change the search path."
-  :group 'ess-proc
-  :type 'regexp)
+  "The regexp for matching the S commands that change the search path.")
 
-(defcustom ess-R-change-sp-regexp
+(defvar ess-R-change-sp-regexp
   "\\(attach(\\([^)]\\|$\\)\\|detach(\\|library(\\|require(\\|source(\\)"
-  "The regexp for matching the R commands that change the search path."
-  :group 'ess-proc
-  :type 'regexp)
-
+  "The regexp for matching the R commands that change the search path.")
 
 ;;*;; Process-dependent variables
 
@@ -1838,7 +1969,7 @@ See also function `ess-create-object-name-db'.")
 
 ;; SJE: 2007-07-16 -- add to quieten byte compile.
 (defvar ess-loop-timeout nil
-  "Number ofloops ess-mode will wait for prompt before signalling an error.")
+  "Number of loops ess-mode will wait for prompt before signalling an error.")
 
 (defcustom ess-S-loop-timeout 2000000
   "Integer specifying how many loops ess-mode will wait for the prompt
@@ -1961,13 +2092,9 @@ system described in `ess-font-lock-keywords'.")
 (make-variable-buffer-local 'ess-font-lock-defaults)
 
 
-;;; fl-keywords general
-(defvar ess-function-call-regexp
-  "\\(\\sw+\\)("
-  "Regexp for function names for R")
 
 (defvar ess-fl-keyword:fun-calls
-  (cons ess-function-call-regexp '(1 ess-function-call-face keep))
+  (cons "\\(\\sw+\\) ?(" '(1 ess-function-call-face keep))
   "Font lock for function calls.")
 
 (defvar ess-fl-keyword:numbers
@@ -1995,7 +2122,7 @@ system described in `ess-font-lock-keywords'.")
   "Font-lock keyword R modifiers")
 
 (defvar ess-S-fl-keyword:fun-defs
-  (cons ess-S-function-name-regexp 
+  (cons ess-S-function-name-regexp
         '(1 font-lock-function-name-face t)  ; override
         )
   "Font-lock function deffinitions keyword.")
@@ -2042,7 +2169,7 @@ default or not."
    "Font-lock keyword R modifiers")
 
 (defvar ess-R-fl-keyword:fun-defs
-   (cons ess-R-function-name-regexp 
+   (cons ess-R-function-name-regexp
          '(1 font-lock-function-name-face t)  ; override
          )
    "Font-lock keyword - function defintions for R.")
@@ -2116,13 +2243,13 @@ system described in `inferior-ess-font-lock-keywords'.")
   "Matrix and vector numeric labels.
 ") ;; also matches subsetting
 
-(defvar ess-R-fl-keyword:messages 
+(defvar ess-R-fl-keyword:messages
   (cons (concat "^" (regexp-opt ess-R-message-prefixes 'enc-paren))
         'font-lock-constant-face)
   "Inferior-ess problems or errors.")
 
 (defcustom inferior-R-font-lock-keywords
-  '((ess-S-fl-keyword:prompt   . t) ;; comint does that, but misses some prompts 
+  '((ess-S-fl-keyword:prompt   . t) ;; comint does that, but misses some prompts
     ;; (ess-S-fl-keyword:input-line) ;; comint boguously highlights input with text props, no use for this
     (ess-R-fl-keyword:modifiers . t)
     (ess-R-fl-keyword:fun-defs  . t)
@@ -2157,7 +2284,7 @@ NOT used. See `inferior-S-font-lock-keywords'")
 (make-obsolete-variable 'ess-S-common-font-lock-keywords nil "ESS[12.09]")
 
 
-(defvar ess-S-fl-keyword:messages 
+(defvar ess-S-fl-keyword:messages
   (cons (concat "^" (regexp-opt ess-S-message-prefixes 'enc-paren))
         'font-lock-constant-face)
   "Inferior-ess problems or errors.")
@@ -2241,21 +2368,21 @@ the variable `ess-help-own-frame' is non-nil."
   "Face name to use for highlighting numbers.")
 
 (if (featurep 'xemacs)
-    ;; just to make xemacs not to choke on ESS 
+    ;; just to make xemacs not to choke on ESS
     (setq ess-function-call-face font-lock-builtin-face
           ess-numbers-face font-lock-type-face)
-  
+
   (defface ess-function-call-face
     '((default (:slant normal :inherit font-lock-builtin-face)))
     "Font Lock face used to highlight function calls in ess buffers."
     :group 'ess)
-  
+
   (defface ess-numbers-face
     '((default (:slant normal :inherit font-lock-type-face)))
     "Font Lock face used to highlight numbers in ess-mode buffers."
     :group 'ess)
   )
-  
+
 
 (defcustom ess-help-kill-bogus-buffers t
   "Non-nil means kill ESS help buffers immediately if they are \"bogus\"."
@@ -2267,12 +2394,16 @@ the variable `ess-help-own-frame' is non-nil."
 Choices are `separate-buffer', `s-process', `www'.  The latter uses
 `browse-url' to find the location.")
 
-;; WWW Help NOT included yet.  Be patient.
-(defvar ess-help-w3-url-prefix "http://pyrite.cfas.washington.edu/ESS/R/"
-  "*Head URL for finding function help.")
+(defvar ess-help-web-search-command nil
+  "Dialect specific command web help search.
+Passed to `ess-execute-dialect-specific' which see. ")
+(make-variable-buffer-local 'ess-help-web-search-command)
 
-(defvar ess-help-w3-url-funs "funs/"
-  "Place to find functions.")
+(defvar ess-funargs-command  nil
+  "Dialect specific command to return a list of function arguments.
+See `ess-function-arguments' and .ess.funargs command in R and
+S+ for details of the format that should be returned.")
+(make-variable-buffer-local 'ess-funargs-command)
 
 (defcustom ess-r-args-noargsmsg "No args found."
   "Message returned if \\[ess-r-args-get] cannot find a list of arguments."
@@ -2325,7 +2456,7 @@ Defaults to `ess-S-non-functions'."
 
  ; julia-mode
 (defvar inferior-julia-program-name "julia-release-basic"
-  ;; the default assumes it is on the PATH ... which is typically the case after 
+  ;; the default assumes it is on the PATH ... which is typically the case after
   ;; a "typical unix-alike installation"
   "Path to julia-release-basic executable")
 
