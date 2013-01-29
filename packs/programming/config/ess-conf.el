@@ -1,3 +1,5 @@
 (live-add-pack-lib "ess")
+(live-add-pack-lib "ess/lisp")
 
-(load "ess-autoloads.el")
+
+(require 'ess-site)
