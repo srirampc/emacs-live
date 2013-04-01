@@ -252,3 +252,14 @@ children of DIRECTORY."
     (cond ((processp proc)
            (server-delete-client proc))
           (t (error "Could not kill terminal: invalid client frame")))))
+
+(defun live-persistent-scratch-buffer ()
+  "Create a new persistent empty buffer (i.e. saved as a file)"
+  (interactive)
+  (let* ((id (concat "pscratch-" (uuid-string)))
+        (fname (concat live-pscratch-dir id))
+       (buf (get-buffer-create id)))
+    (switch-to-buffer buf)
+    (with-current-buffer buf
+      (write-file fname)
+      (auto-save-mode 1))))

@@ -87,15 +87,16 @@ great if you opened a pull-request. The repo is at:
 All changes must be accompanied by feature tests.
 They are written in [Ecukes](http://ecukes.info), a Cucumber for Emacs.
 
-To fetch the test dependencies:
+To fetch the test dependencies, install
+[carton](https://github.com/rejeep/carton) if you haven't already,
+then:
 
     $ cd /path/to/expand-region
-    $ git submodule init
-    $ git submodule update
+    $ carton
 
 Run the tests with:
 
-    $ ./util/ecukes/ecukes features
+    $ ./run-tests.sh
 
 If feature tests are missing for the mode you are changing, please make
 sure to add a set of basic tests around the functionality you're changing.
@@ -118,6 +119,7 @@ sure to add a set of basic tests around the functionality you're changing.
 * [Gleb Peregud](https://github.com/gleber) contributed Erlang expansions.
 * [Mark Hepburn](https://github.com/markhepburn) contributed Octave expansions.
 * [Rotem Yaari](https://github.com/vmalloc) also contributed an adapter for the region expansion in web-mode.
+* [Kang-min Liu](https://github.com/gugod) contributed Perl expansions.
 
 Thanks!
 
@@ -136,7 +138,7 @@ Thanks!
 
 ## License
 
-Copyright (C) 2011 Magnar Sveen
+Copyright (C) 2011-2013 Magnar Sveen
 
 Author: Magnar Sveen <magnars@gmail.com>
 Keywords: marking region

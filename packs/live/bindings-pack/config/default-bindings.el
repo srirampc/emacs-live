@@ -6,6 +6,7 @@
 ;;e - eval and replace
 ;;b - winner undo
 ;;f - winner redo
+;;g - git gutter
 ;;l - lispy shortcuts (i.e. paredit and clojure specific fns)
 ;;m - emacs eval shortcuts
 ;;t - text shortcuts
@@ -16,6 +17,7 @@
 ;;s - show popupwindows
 ;;w - window and buffer shortcuts
 
+
 ;; Should be able to eval-and-replace anywhere.
 (global-set-key (kbd "C-c e") 'eval-and-replace)
 
@@ -23,6 +25,15 @@
 (global-set-key (kbd "C-c b") 'winner-undo)
 (define-key nrepl-interaction-mode-map (kbd "C-c b") 'winner-undo)
 (global-set-key (kbd "C-c f") 'winner-redo)
+
+;; Git Gutter
+(global-set-key (kbd "C-c g g") 'git-gutter:toggle)
+
+;; Jump to next/previous diff
+(global-set-key (kbd "C-c g p") 'git-gutter:previous-diff)
+(global-set-key (kbd "C-c g n") 'git-gutter:next-diff)
+(global-set-key (kbd "C-c g d") 'git-gutter:popup-diff)
+(global-set-key (kbd "C-c g r") 'git-gutter:revert-hunk)
 
 ;;text manipulation shortcuts
 (global-set-key (kbd "C-c t b") 'untabify-buffer)
@@ -175,7 +186,7 @@
 ;; File
 (global-set-key (kbd "C-x M-f")   'ido-find-file-other-window)
 (global-set-key (kbd "C-x C-M-f") 'find-file-in-project)
-(global-set-key (kbd "C-x f")     'recentf-ido-find-file)
+(global-set-key (kbd "C-x f")     'live-recentf-ido-find-file)
 (global-set-key (kbd "C-x C-r")   'ido-recentf-open)
 (global-set-key (kbd "M-`")       'file-cache-minibuffer-complete)
 (global-set-key (kbd "C-x C-b")   'ibuffer)

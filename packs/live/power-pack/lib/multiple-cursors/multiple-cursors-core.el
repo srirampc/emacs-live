@@ -41,13 +41,14 @@
 
 (defmacro mc/add-fake-cursor-to-undo-list (&rest forms)
   "Make sure point is in the right place when undoing"
-  `(let ((undo-cleaner (cons 'apply (cons 'deactivate-cursor-after-undo (list id)))))
-     (setq buffer-undo-list (cons undo-cleaner buffer-undo-list))
-     ,@forms
-     (if (eq undo-cleaner (car buffer-undo-list)) ;; if nothing has been added to the undo-list
-         (setq buffer-undo-list (cdr buffer-undo-list)) ;; then pop the cleaner right off again
-       (setq buffer-undo-list ;; otherwise add a function to activate this cursor
-             (cons (cons 'apply (cons 'activate-cursor-for-undo (list id))) buffer-undo-list)))))
+  (let ((uc (make-symbol "undo-cleaner")))
+   `(let ((,uc (cons 'apply (cons 'deactivate-cursor-after-undo (list id)))))
+      (setq buffer-undo-list (cons ,uc buffer-undo-list))
+      ,@forms
+      (if (eq ,uc (car buffer-undo-list)) ;; if nothing has been added to the undo-list
+          (setq buffer-undo-list (cdr buffer-undo-list)) ;; then pop the cleaner right off again
+        (setq buffer-undo-list ;; otherwise add a function to activate this cursor
+              (cons (cons 'apply (cons 'activate-cursor-for-undo (list id))) buffer-undo-list))))))
 
 (defun mc/all-fake-cursors (&optional start end)
   (remove-if-not 'mc/fake-cursor-p
@@ -61,35 +62,40 @@
 
 (defmacro mc/save-excursion (&rest forms)
   "Saves and restores all the state that multiple-cursors cares about."
-  `(let ((current-state (mc/store-current-state-in-overlay
-                         (make-overlay (point) (point) nil nil t))))
-     (overlay-put current-state 'type 'original-cursor)
-     (save-excursion ,@forms)
-     (mc/pop-state-from-overlay current-state)))
+  (let ((cs (make-symbol "current-state")))
+   `(let ((,cs (mc/store-current-state-in-overlay
+                          (make-overlay (point) (point) nil nil t))))
+      (overlay-put ,cs 'type 'original-cursor)
+      (save-excursion ,@forms)
+      (mc/pop-state-from-overlay ,cs))))
 
 (defun mc--compare-by-overlay-start (o1 o2)
   (< (overlay-start o1) (overlay-start o2)))
 
 (defmacro mc/for-each-cursor-ordered (&rest forms)
   "Runs the body for each cursor, fake and real, bound to the name cursor"
-  `(let ((real-cursor (mc/create-fake-cursor-at-point)))
-     (mapc #'(lambda (cursor)
-               (when (mc/fake-cursor-p cursor)
-                 ,@forms))
-           (sort (overlays-in (point-min) (point-max)) 'mc--compare-by-overlay-start))
-     (mc/pop-state-from-overlay real-cursor)))
+  (let ((rci (make-symbol "real-cursor-id")))
+   `(let ((,rci (overlay-get (mc/create-fake-cursor-at-point) 'mc-id)))
+      (mapc #'(lambda (cursor)
+                (when (mc/fake-cursor-p cursor)
+                  ,@forms))
+            (sort (overlays-in (point-min) (point-max)) 'mc--compare-by-overlay-start))
+      (mc/pop-state-from-overlay (mc/cursor-with-id ,rci)))))
 
 (defmacro mc/save-window-scroll (&rest forms)
   "Saves and restores the window scroll position"
-  `(let ((p (set-marker (make-marker) (point)))
-         (start (set-marker (make-marker) (window-start)))
-         (hscroll (window-hscroll)))
-     ,@forms
-     (goto-char p)
-     (set-window-start nil start)
-     (set-window-hscroll nil hscroll)
-     (set-marker p nil)
-     (set-marker start nil)))
+  (let ((p (make-symbol "p"))
+        (s (make-symbol "start"))
+        (h (make-symbol "hscroll")))
+   `(let ((,p (set-marker (make-marker) (point)))
+          (,s (set-marker (make-marker) (window-start)))
+          (,h (window-hscroll)))
+      ,@forms
+      (goto-char ,p)
+      (set-window-start nil ,s t)
+      (set-window-hscroll nil ,h)
+      (set-marker ,p nil)
+      (set-marker ,s nil))))
 
 (defun mc/make-cursor-overlay-at-eol (pos)
   "Create overlay to look like cursor at end of line."
@@ -120,6 +126,7 @@ highlights the entire width of the window."
 
 (defvar mc/cursor-specific-vars '(autopair-action
                                   autopair-wrap-action
+                                  transient-mark-mode
                                   er/history)
   "A list of vars that need to be tracked on a per-cursor basis.")
 
@@ -198,6 +205,17 @@ Saves the current state in the overlay to be restored later."
 
 (defvar mc--executing-command-for-fake-cursor nil)
 
+(defun mc/execute-command-for-fake-cursor (cmd cursor)
+  (let ((mc--executing-command-for-fake-cursor t)
+        (id (overlay-get cursor 'mc-id))
+        (annoying-arrows-mode nil)
+        (smooth-scroll-margin 0))
+    (mc/add-fake-cursor-to-undo-list
+     (mc/pop-state-from-overlay cursor)
+     (ignore-errors
+       (mc/execute-command cmd)
+       (mc/create-fake-cursor-at-point id)))))
+
 (defun mc/execute-command-for-all-fake-cursors (cmd)
   "Calls CMD interactively for each cursor.
 It works by moving point to the fake cursor, setting
@@ -208,16 +226,13 @@ cursor with updated info."
    (mc/save-window-scroll
     (mc/for-each-fake-cursor
      (save-excursion
-       (let ((mc--executing-command-for-fake-cursor t)
-             (id (overlay-get cursor 'mc-id))
-             (annoying-arrows-mode nil)
-             (smooth-scroll-margin 0))
-         (mc/add-fake-cursor-to-undo-list
-          (mc/pop-state-from-overlay cursor)
-          (ignore-errors
-            (mc/execute-command cmd)
-            (mc/create-fake-cursor-at-point id))))))))
+       (mc/execute-command-for-fake-cursor cmd cursor)))))
   (mc--reset-read-prompts))
+
+(defun mc/execute-command-for-all-cursors (cmd)
+  "Calls CMD interactively for the real cursor and all fakes."
+  (call-interactively cmd)
+  (mc/execute-command-for-all-fake-cursors cmd))
 
 ;; Intercept some reading commands so you won't have to
 ;; answer them for every single cursor
@@ -561,8 +576,12 @@ for running commands with multiple cursors.")
                                      mc/mark-all-symbols-like-this-in-defun
                                      mc/mark-all-like-this-dwim
                                      mc/mark-sgml-tag-pair
+                                     mc/insert-numbers
+                                     mc/sort-regions
+                                     mc/reverse-regions
                                      mc/cycle-forward
                                      mc/cycle-backward
+                                     mc/add-cursor-on-click
                                      rrm/switch-to-multiple-cursors
                                      save-buffer
                                      ido-exit-minibuffer
